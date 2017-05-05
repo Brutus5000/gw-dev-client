@@ -6,8 +6,7 @@ import com.faforever.gw.messaging.outgoing.ClientMessage;
 import com.faforever.gw.model.GwException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -16,12 +15,16 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
-import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import javax.inject.Inject;
 
 @Service
 @Slf4j
@@ -120,7 +123,7 @@ public class MessagingService {
         val requestId = message.getRequestId();
         val future = pendingRequests.remove(message.getRequestId());
         if (future != null) {
-            log.error("Error on requestId {}", requestId);
+            log.error("Error on requestId {}: [{}] {}", requestId, message.getErrorCode(), message.getErrorMessage());
             future.completeExceptionally(
                     new GwException(message.getErrorCode(), message.getErrorMessage()));
         } else {
