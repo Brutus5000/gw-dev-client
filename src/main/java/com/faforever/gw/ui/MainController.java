@@ -3,6 +3,7 @@ package com.faforever.gw.ui;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.GwClient;
 import com.faforever.gw.model.entitity.Battle;
+import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
 import com.faforever.gw.model.event.NewBattleEvent;
 import com.faforever.gw.model.event.PlanetConqueredEvent;
@@ -55,7 +56,7 @@ public class MainController {
     @FXML
     private Button disconnectButton;
     @FXML
-    private ComboBox initiateAssaultComboBox;
+    private ComboBox<PlanetWrapper> initiateAssaultComboBox;
     @FXML
     private Button initiateAssaultButton;
     @FXML
@@ -75,6 +76,17 @@ public class MainController {
     @Inject
     public MainController(GwClient gwClient) {
         this.gwClient = gwClient;
+    }
+
+    static class PlanetWrapper {
+        public final Planet planet;
+        PlanetWrapper(Planet planet) {
+            this.planet = planet;
+        }
+
+        public String toString() {
+            return String.format("%s %s", planet.getCurrentOwner().getName(), planet.getId());
+        }
     }
 
     @FXML
@@ -133,7 +145,7 @@ public class MainController {
                 userAccessTokenMap.get(userComboBox.getValue()));
 
         val planets = gwClient.getPlanets();
-        planets.forEach(planet -> initiateAssaultComboBox.getItems().add(planet.getId()));
+        planets.forEach(planet -> initiateAssaultComboBox.getItems().add(new PlanetWrapper(planet)));
 
         val battles = gwClient.getInitiatedBattles();
         battles.forEach(battle -> {
@@ -193,7 +205,7 @@ public class MainController {
         if (initiateAssaultComboBox.getSelectionModel().isEmpty())
             return;
 
-        gwClient.initiateAssault(UUID.fromString(initiateAssaultComboBox.getSelectionModel().getSelectedItem().toString()));
+        gwClient.initiateAssault(UUID.fromString(initiateAssaultComboBox.getSelectionModel().getSelectedItem().planet.getId()));
     }
 
     @SneakyThrows
