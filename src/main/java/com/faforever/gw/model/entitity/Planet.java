@@ -8,6 +8,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Type("planet")
@@ -24,4 +25,9 @@ public class Planet implements Serializable {
     //    private Map map;
     private Faction currentOwner;
 
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Planet)) return false;
+        return Objects.equals(id, ((Planet) o).getId());
+    }
 }
