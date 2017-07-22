@@ -196,6 +196,9 @@ public class MainController {
     public void onDisconnectClicked() {
         gwClient.disconnect();
         universeApiAccessor.disconnect();
+
+        battleData.clear();
+        universeTreeTableView.getRoot().getChildren().clear();
     }
 
     @EventListener
