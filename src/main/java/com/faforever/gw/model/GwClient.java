@@ -12,10 +12,8 @@ import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.NewBattleEvent;
 import com.faforever.gw.model.event.PlanetDefendedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.jasminb.jsonapi.JSONAPIDocument;
 import com.github.jasminb.jsonapi.ResourceConverter;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,13 +23,9 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,8 +35,9 @@ public class GwClient {
     private final ObjectMapper jsonObjectMapper;
     private final SimpleClientHttpRequestFactory simpleClientHttpRequestFactory;
     private final ResourceConverter resourceConverter;
+    private final UniverseApiAccessor universeApiAccessor;
     private String host;
-    private String port;
+    private int port;
     private Map<UUID, ClientMessage> pendingMessages = new HashMap<>();
     private ClientState clientState;
     @Getter
@@ -51,10 +46,11 @@ public class GwClient {
     private UUID myCharacter;
 
     @Inject
-    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper) {
+    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseApiAccessor universeApiAccessor) {
         this.applicationEventPublisher = applicationEventPublisher;
         this.messagingService = messagingService;
         this.jsonObjectMapper = jsonObjectMapper;
+        this.universeApiAccessor = universeApiAccessor;
         this.simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         this.resourceConverter = new ResourceConverter(SolarSystem.class, Planet.class, Battle.class, BattleParticipant.class, GwCharacter.class);
     }
@@ -95,7 +91,7 @@ public class GwClient {
             applicationEventPublisher.publishEvent(clientState);
         }
 
-        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(getBattle(message.getBattleId())));
+        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(universeApiAccessor.getBattle(message.getBattleId())));
     }
 
     @EventListener
@@ -106,10 +102,10 @@ public class GwClient {
             applicationEventPublisher.publishEvent(clientState);
         }
 
-        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(getBattle(message.getBattleId())));
+        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(universeApiAccessor.getBattle(message.getBattleId())));
     }
 
-    public void connect(String host, String port, String token) {
+    public void connect(String host, int port, String token) {
         this.host = host;
         this.port = port;
         String uri = String.format("ws://%s:%s/websocket?accessToken=%s", host, port, token);
@@ -121,44 +117,6 @@ public class GwClient {
         clientState = ClientState.DISCONNECTED;
         log.debug("New client state: {}", clientState);
         applicationEventPublisher.publishEvent(clientState);
-    }
-
-    @SneakyThrows
-    public List<SolarSystem> buildUniverse() {
-        List<SolarSystem> solarSystems = getSolarSystems();
-        List<Battle> activeBattles = getActiveBattles();
-
-        Map<String, Planet> planetsById = solarSystems.stream()
-                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
-                .collect(Collectors.toMap(Planet::getId, Function.identity()));
-
-        activeBattles.forEach(
-                battle -> {
-                    Planet planet = planetsById.get(battle.getPlanet().getId());
-                    // Due to querying API twice we now have 2 different Planet-objects for the same entity. Let's get rid of one
-                    battle.setPlanet(planet);
-                    // attach the active battle to the planet
-                    planet.getActiveBattles().add(battle);
-                }
-        );
-
-        return solarSystems;
-    }
-
-    @SneakyThrows
-    public List<SolarSystem> getSolarSystems() {
-        URL solarSystemListUrl = new URL(String.format("http://%s:%s/data/solarSystem?include=planets", host, port));
-        JSONAPIDocument<List<SolarSystem>> solarSystemList = resourceConverter.readDocumentCollection(solarSystemListUrl.openStream(), SolarSystem.class);
-
-        return solarSystemList.get();
-    }
-
-    @SneakyThrows
-    List<Battle> getActiveBattles() {
-        URL battleListUrl = new URL(String.format("http://%s:%s/data/battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')", host, port));
-        JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
-
-        return battleList.get();
     }
 
     public void initiateAssault(UUID planetId) throws IOException {
@@ -190,17 +148,9 @@ public class GwClient {
                 });
     }
 
-    @SneakyThrows
-    private Battle getBattle(UUID battleId) {
-        URL battleUrl = new URL(String.format("http://%s:%s/data/battle/%s", host, port, battleId.toString()));
-        ResourceConverter resourceConverter = new ResourceConverter(jsonObjectMapper, Battle.class);
-        JSONAPIDocument<Battle> battle = resourceConverter.readDocument(battleUrl.openStream(), Battle.class);
-        return battle.get();
-    }
-
     @EventListener
     private void onPlanetUnderAssault(PlanetUnderAssaultMessage message) {
-        val battle = getBattle(message.getBattleId());
+        val battle = universeApiAccessor.getBattle(message.getBattleId());
         applicationEventPublisher.publishEvent(new NewBattleEvent(battle));
     }
 

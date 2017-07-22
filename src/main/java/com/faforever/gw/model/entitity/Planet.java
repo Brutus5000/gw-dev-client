@@ -16,14 +16,12 @@ public class Planet implements Serializable {
     private String id;
     @Relationship("solarSystem")
     private SolarSystem solarSystem;
-    //    private List<Battle> battles;
-
-    private List<Battle> activeBattles = new ArrayList<>();
-
+    private List<Battle> battles = new ArrayList<>();
     private int orbitLevel;
     private int size;
     private boolean habitable;
     private Ground ground;
     //    private Map map;
     private Faction currentOwner;
+
 }

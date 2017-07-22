@@ -2,8 +2,8 @@ package com.faforever.gw.ui;
 
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.GwClient;
+import com.faforever.gw.model.UniverseApiAccessor;
 import com.faforever.gw.model.entitity.Battle;
-import com.faforever.gw.model.entitity.BattleStatus;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.*;
 import javafx.application.Platform;
@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -65,29 +64,31 @@ public class MainController {
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
+    private final UniverseApiAccessor universeApiAccessor;
+
     private Map<String, String> userAccessTokenMap = new TreeMap<>();
 
     @Inject
-    public MainController(GwClient gwClient) {
+    public MainController(GwClient gwClient, UniverseApiAccessor universeApiAccessor) {
         this.gwClient = gwClient;
+        this.universeApiAccessor = universeApiAccessor;
     }
 
     public void onConnectClicked() {
 //        gwClient.connect(String.format("ws://echo.websocket.org",
-        gwClient.connect(hostTextField.getText(),
-                portTextField.getText(),
+
+        String host = hostTextField.getText();
+        int port = Integer.parseInt(portTextField.getText());
+
+        universeApiAccessor.connect(host, port);
+        gwClient.connect(host, port,
                 userAccessTokenMap.get(userComboBox.getValue()));
 
-        val universe = gwClient.buildUniverse();
-        val planets = universe.stream()
-                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
-                .collect(Collectors.toList());
+        val planets = universeApiAccessor.getPlanets();
 
         planets.forEach(planet -> initiateAssaultComboBox.getItems().add(new PlanetWrapper(planet)));
 
-        planets.stream()
-                .flatMap(planet -> planet.getActiveBattles().stream())
-                .filter(battle -> battle.getStatus() == BattleStatus.INITIATED)
+        universeApiAccessor.getActiveBattles().values()
                 .forEach(battle -> {
                     joinAssaultComboBox.getItems().add(battle.getId());
                     battleData.add(battle);
