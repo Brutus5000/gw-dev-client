@@ -1,4 +1,4 @@
-package com.faforever.gw.model;
+package com.faforever.gw.services;
 
 import com.faforever.gw.model.entitity.*;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package com.faforever.gw.model;
+package com.faforever.gw.services;
 
 import com.faforever.gw.messaging.MessagingService;
 import com.faforever.gw.messaging.incoming.*;
@@ -6,6 +6,7 @@ import com.faforever.gw.messaging.outgoing.ClientMessage;
 import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
 import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
 import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
+import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.entitity.*;
 import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
 import com.faforever.gw.model.event.ErrorEvent;

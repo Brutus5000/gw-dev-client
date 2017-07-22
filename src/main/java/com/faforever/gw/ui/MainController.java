@@ -1,11 +1,11 @@
 package com.faforever.gw.ui;
 
 import com.faforever.gw.model.ClientState;
-import com.faforever.gw.model.GwClient;
-import com.faforever.gw.model.UniverseApiAccessor;
 import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.*;
+import com.faforever.gw.services.GwClient;
+import com.faforever.gw.services.UniverseApiAccessor;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
