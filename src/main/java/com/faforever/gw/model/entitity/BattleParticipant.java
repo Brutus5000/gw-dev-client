@@ -1,13 +1,16 @@
 package com.faforever.gw.model.entitity;
 
+import com.github.jasminb.jsonapi.annotations.Id;
+import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 @Data
+@Type("battleParticipant")
 public class BattleParticipant implements Serializable {
-    private UUID id;
+    @Id
+    private String id;
     private Battle battle;
     private GwCharacter character;
     private BattleRole role;

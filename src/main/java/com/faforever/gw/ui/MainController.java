@@ -4,35 +4,24 @@ import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.GwClient;
 import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
-import com.faforever.gw.model.event.NewBattleEvent;
-import com.faforever.gw.model.event.PlanetConqueredEvent;
-import com.faforever.gw.model.event.PlanetDefendedEvent;
-
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-
+import com.faforever.gw.model.event.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
-
-import javax.inject.Inject;
 
 @Component
 @Slf4j
@@ -227,6 +216,17 @@ public class MainController {
             battleData.stream()
                     .filter(battle -> battle.getId().equals(battleId.toString()))
                     .findFirst().ifPresent(battle -> battleData.remove(battle));
+        });
+    }
+
+    @EventListener
+    private void onErrorEvent(ErrorEvent event) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error from server");
+            alert.setHeaderText(event.getMessage());
+            alert.setContentText(event.getCode());
+            alert.showAndWait();
         });
     }
 

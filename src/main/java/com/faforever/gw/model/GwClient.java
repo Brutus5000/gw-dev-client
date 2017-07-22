@@ -1,43 +1,37 @@
 package com.faforever.gw.model;
 
 import com.faforever.gw.messaging.MessagingService;
-import com.faforever.gw.messaging.incoming.BattleParticipantJoinedAssaultMessage;
-import com.faforever.gw.messaging.incoming.BattleUpdateWaitingProgressMessage;
-import com.faforever.gw.messaging.incoming.HelloMessage;
-import com.faforever.gw.messaging.incoming.PlanetConqueredMessage;
-import com.faforever.gw.messaging.incoming.PlanetDefendedMessage;
-import com.faforever.gw.messaging.incoming.PlanetUnderAssaultMessage;
+import com.faforever.gw.messaging.incoming.*;
 import com.faforever.gw.messaging.outgoing.ClientMessage;
 import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
 import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
 import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
 import com.faforever.gw.model.entitity.Battle;
+import com.faforever.gw.model.entitity.BattleParticipant;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
+import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.NewBattleEvent;
 import com.faforever.gw.model.event.PlanetDefendedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jasminb.jsonapi.JSONAPIDocument;
 import com.github.jasminb.jsonapi.ResourceConverter;
-
+import lombok.Getter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 
-import lombok.Getter;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-
+import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.inject.Inject;
 
 @Slf4j
 @Service
@@ -74,6 +68,12 @@ public class GwClient {
         }
         log.debug("New client state: {}", clientState);
         applicationEventPublisher.publishEvent(clientState);
+    }
+
+    @EventListener
+    private void onError(ErrorMessage message) {
+        log.debug("Error from server: [{}] {}", message.getErrorCode(), message.getErrorMessage());
+        applicationEventPublisher.publishEvent(new ErrorEvent(message.getErrorCode(), message.getErrorMessage()));
     }
 
     @EventListener
@@ -133,7 +133,7 @@ public class GwClient {
     @SneakyThrows
     public List<Battle> getInitiatedBattles() {
         URL battleListUrl = new URL(String.format("http://%s:%s/data/battle?filter[battle]=status==INITIATED", host, port));
-        ResourceConverter resourceConverter = new ResourceConverter(Battle.class);
+        ResourceConverter resourceConverter = new ResourceConverter(Battle.class, BattleParticipant.class);
         JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
 
         return battleList.get();
