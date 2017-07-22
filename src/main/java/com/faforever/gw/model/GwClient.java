@@ -6,9 +6,7 @@ import com.faforever.gw.messaging.outgoing.ClientMessage;
 import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
 import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
 import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
-import com.faforever.gw.model.entitity.Battle;
-import com.faforever.gw.model.entitity.BattleParticipant;
-import com.faforever.gw.model.entitity.Planet;
+import com.faforever.gw.model.entitity.*;
 import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
 import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.NewBattleEvent;
@@ -32,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -40,6 +40,7 @@ public class GwClient {
     private final MessagingService messagingService;
     private final ObjectMapper jsonObjectMapper;
     private final SimpleClientHttpRequestFactory simpleClientHttpRequestFactory;
+    private final ResourceConverter resourceConverter;
     private String host;
     private String port;
     private Map<UUID, ClientMessage> pendingMessages = new HashMap<>();
@@ -55,6 +56,7 @@ public class GwClient {
         this.messagingService = messagingService;
         this.jsonObjectMapper = jsonObjectMapper;
         this.simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+        this.resourceConverter = new ResourceConverter(SolarSystem.class, Planet.class, Battle.class, BattleParticipant.class, GwCharacter.class);
     }
 
     @EventListener
@@ -122,18 +124,38 @@ public class GwClient {
     }
 
     @SneakyThrows
-    public List<Planet> getPlanets() {
-        URL planetListUrl = new URL(String.format("http://%s:%s/data/planet", host, port));
-        ResourceConverter resourceConverter = new ResourceConverter(Planet.class);
-        JSONAPIDocument<List<Planet>> planetList = resourceConverter.readDocumentCollection(planetListUrl.openStream(), Planet.class);
+    public List<SolarSystem> buildUniverse() {
+        List<SolarSystem> solarSystems = getSolarSystems();
+        List<Battle> activeBattles = getActiveBattles();
 
-        return planetList.get();
+        Map<String, Planet> planetsById = solarSystems.stream()
+                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
+                .collect(Collectors.toMap(Planet::getId, Function.identity()));
+
+        activeBattles.forEach(
+                battle -> {
+                    Planet planet = planetsById.get(battle.getPlanet().getId());
+                    // Due to querying API twice we now have 2 different Planet-objects for the same entity. Let's get rid of one
+                    battle.setPlanet(planet);
+                    // attach the active battle to the planet
+                    planet.getActiveBattles().add(battle);
+                }
+        );
+
+        return solarSystems;
     }
 
     @SneakyThrows
-    public List<Battle> getInitiatedBattles() {
-        URL battleListUrl = new URL(String.format("http://%s:%s/data/battle?filter[battle]=status==INITIATED", host, port));
-        ResourceConverter resourceConverter = new ResourceConverter(Battle.class, BattleParticipant.class);
+    public List<SolarSystem> getSolarSystems() {
+        URL solarSystemListUrl = new URL(String.format("http://%s:%s/data/solarSystem?include=planets", host, port));
+        JSONAPIDocument<List<SolarSystem>> solarSystemList = resourceConverter.readDocumentCollection(solarSystemListUrl.openStream(), SolarSystem.class);
+
+        return solarSystemList.get();
+    }
+
+    @SneakyThrows
+    List<Battle> getActiveBattles() {
+        URL battleListUrl = new URL(String.format("http://%s:%s/data/battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')", host, port));
         JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
 
         return battleList.get();

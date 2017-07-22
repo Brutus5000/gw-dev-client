@@ -1,5 +1,6 @@
 package com.faforever.gw.model.entitity;
 
+import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -7,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @AllArgsConstructor
+@Type("battleParticipantResult")
 public enum BattleParticipantResult {
     VICTORY("victory"),
     DEATH("death"),

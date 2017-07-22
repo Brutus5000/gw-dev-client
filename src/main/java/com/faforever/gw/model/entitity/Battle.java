@@ -16,6 +16,7 @@ import java.util.List;
 public class Battle implements Serializable {
     @Id
     private String id;
+    @Relationship("planet")
     private Planet planet;
     @Relationship("participants")
     private List<BattleParticipant> participants;

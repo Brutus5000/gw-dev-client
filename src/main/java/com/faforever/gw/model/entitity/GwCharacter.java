@@ -1,16 +1,19 @@
 package com.faforever.gw.model.entitity;
 
+import com.github.jasminb.jsonapi.annotations.Id;
+import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 @Data
+@Type("gwCharacter")
 public class GwCharacter implements Serializable {
-    private UUID id;
+    @Id
+    private String id;
     private int fafId;
     private String name;
     private Faction faction;

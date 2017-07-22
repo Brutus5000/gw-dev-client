@@ -3,6 +3,7 @@ package com.faforever.gw.ui;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.GwClient;
 import com.faforever.gw.model.entitity.Battle;
+import com.faforever.gw.model.entitity.BattleStatus;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.*;
 import javafx.application.Platform;
@@ -22,6 +23,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -58,6 +60,9 @@ public class MainController {
     private Button leaveAssaultButton;
     @FXML
     private TableView<Battle> battleTableView;
+    @FXML
+    private TreeTableView universeTreeTableView;
+
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
     private Map<String, String> userAccessTokenMap = new TreeMap<>();
@@ -67,15 +72,26 @@ public class MainController {
         this.gwClient = gwClient;
     }
 
-    static class PlanetWrapper {
-        public final Planet planet;
-        PlanetWrapper(Planet planet) {
-            this.planet = planet;
-        }
+    public void onConnectClicked() {
+//        gwClient.connect(String.format("ws://echo.websocket.org",
+        gwClient.connect(hostTextField.getText(),
+                portTextField.getText(),
+                userAccessTokenMap.get(userComboBox.getValue()));
 
-        public String toString() {
-            return String.format("%s %s", planet.getCurrentOwner().getName(), planet.getId());
-        }
+        val universe = gwClient.buildUniverse();
+        val planets = universe.stream()
+                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
+                .collect(Collectors.toList());
+
+        planets.forEach(planet -> initiateAssaultComboBox.getItems().add(new PlanetWrapper(planet)));
+
+        planets.stream()
+                .flatMap(planet -> planet.getActiveBattles().stream())
+                .filter(battle -> battle.getStatus() == BattleStatus.INITIATED)
+                .forEach(battle -> {
+                    joinAssaultComboBox.getItems().add(battle.getId());
+                    battleData.add(battle);
+                });
     }
 
     @FXML
@@ -127,20 +143,16 @@ public class MainController {
         battleTableView.setItems(battleData);
     }
 
-    public void onConnectClicked() {
-//        gwClient.connect(String.format("ws://echo.websocket.org",
-        gwClient.connect(hostTextField.getText(),
-                portTextField.getText(),
-                userAccessTokenMap.get(userComboBox.getValue()));
+    static class PlanetWrapper {
+        public final Planet planet;
 
-        val planets = gwClient.getPlanets();
-        planets.forEach(planet -> initiateAssaultComboBox.getItems().add(new PlanetWrapper(planet)));
+        PlanetWrapper(Planet planet) {
+            this.planet = planet;
+        }
 
-        val battles = gwClient.getInitiatedBattles();
-        battles.forEach(battle -> {
-            joinAssaultComboBox.getItems().add(battle.getId());
-            battleData.add(battle);
-        });
+        public String toString() {
+            return String.format("%s %s", planet.getCurrentOwner().getName(), planet.getId());
+        }
     }
 
     public void onDisconnectClicked() {
