@@ -13,6 +13,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TreeItemPropertyValueFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -93,6 +94,17 @@ public class MainController {
                     joinAssaultComboBox.getItems().add(battle.getId());
                     battleData.add(battle);
                 });
+
+        TreeItem root = universeTreeTableView.getRoot();
+        universeApiAccessor.getSolarSystems().forEach(
+                solarSystem -> {
+                    TreeItem<UniverseItemAdapter> solarSystemTreeItem = new TreeItem<>(new UniverseItemAdapter(solarSystem));
+                    root.getChildren().add(solarSystemTreeItem);
+                    solarSystem.getPlanets().forEach(
+                            planet -> solarSystemTreeItem.getChildren().add(new TreeItem<>(new UniverseItemAdapter(planet)))
+                    );
+                }
+        );
     }
 
     @FXML
@@ -108,8 +120,12 @@ public class MainController {
 
         onClientStateChanged(ClientState.DISCONNECTED);
 
+        setupBattleTableView();
+        setupUniverseTreeTableView();
+    }
 
-        TableColumn column_id = new TableColumn("ID");
+    private void setupBattleTableView() {
+        TableColumn column_id = new TableColumn("Location");
         battleTableView.getColumns().add(column_id);
         column_id.setCellValueFactory(new PropertyValueFactory<Battle, String>("id"));
         column_id.setMinWidth(250);
@@ -118,7 +134,7 @@ public class MainController {
 //        battleTableView.getColumns().add(column_planet);
 //        column_planet.setCellValueFactory(new PropertyValueFactory<Battle, String>("planet"));
 
-        TableColumn column_attacker = new TableColumn("Atacker");
+        TableColumn column_attacker = new TableColumn("Attacker");
         battleTableView.getColumns().add(column_attacker);
         column_attacker.setCellValueFactory(new PropertyValueFactory<Battle, String>("attackingFaction"));
 
@@ -140,8 +156,29 @@ public class MainController {
         battleTableView.getColumns().add(column_action);
         column_action.setCellFactory(param -> new ActionButtonCell());
 
-
         battleTableView.setItems(battleData);
+    }
+
+    private void setupUniverseTreeTableView() {
+        TreeTableColumn locationColumn = new TreeTableColumn("Location");
+        locationColumn.setCellValueFactory(new TreeItemPropertyValueFactory<UniverseItemAdapter, String>("location"));
+        locationColumn.setMinWidth(170);
+        universeTreeTableView.getColumns().add(locationColumn);
+
+        TreeTableColumn idColumn = new TreeTableColumn("ID");
+        idColumn.setCellValueFactory(new TreeItemPropertyValueFactory<UniverseItemAdapter, String>("id"));
+        idColumn.setMinWidth(250);
+        universeTreeTableView.getColumns().add(idColumn);
+
+        TreeTableColumn ownerColumn = new TreeTableColumn("Owner");
+        ownerColumn.setCellValueFactory(new TreeItemPropertyValueFactory<UniverseItemAdapter, String>("owner"));
+        ownerColumn.setMinWidth(100);
+        universeTreeTableView.getColumns().add(ownerColumn);
+
+
+        TreeItem<UniverseItemAdapter> rootTreeItem = new TreeItem<>(new UniverseItemAdapter(new Planet()));
+        universeTreeTableView.setRoot(rootTreeItem);
+        universeTreeTableView.setShowRoot(false);
     }
 
     static class PlanetWrapper {
@@ -158,6 +195,7 @@ public class MainController {
 
     public void onDisconnectClicked() {
         gwClient.disconnect();
+        universeApiAccessor.disconnect();
     }
 
     @EventListener

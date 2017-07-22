@@ -40,6 +40,13 @@ public class UniverseApiAccessor {
         update();
     }
 
+    public void disconnect() {
+        solarSystemDict.clear();
+        planetDict.clear();
+        battleDict.clear();
+        activeBattles.clear();
+    }
+
     public void update() {
         buildUniverse();
     }
