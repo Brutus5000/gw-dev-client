@@ -37,14 +37,6 @@ public class UniverseApiAccessor {
     public void connect(String host, int port) {
         this.host = host;
         this.port = port;
-        update();
-    }
-
-    public void disconnect() {
-        solarSystemDict.clear();
-        planetDict.clear();
-        battleDict.clear();
-        activeBattles.clear();
     }
 
     public void update() {
@@ -94,6 +86,14 @@ public class UniverseApiAccessor {
         return battle.get();
     }
 
+    @SneakyThrows
+    private GwCharacter queryCharacter(String id) {
+        URL characterUrl = new URL(String.format("http://%s:%s/data/gwCharacter/%s", host, port, id));
+        JSONAPIDocument<GwCharacter> character = resourceConverter.readDocument(characterUrl.openStream(), GwCharacter.class);
+
+        return character.get();
+    }
+
     public Collection<SolarSystem> getSolarSystems() {
         return solarSystemDict.values();
     }
@@ -125,6 +125,10 @@ public class UniverseApiAccessor {
         return battle;
     }
 
+    public GwCharacter getCharacter(UUID id) {
+        return queryCharacter(id.toString());
+    }
+
     /**
      * Incorporate the battle into the existing universe
      * (important: the planet object was created a second time, this removes the redundancy)
@@ -144,5 +148,17 @@ public class UniverseApiAccessor {
                 && !activeBattles.containsKey(battle.getId())) {
             activeBattles.put(battle.getId(), battle);
         }
+    }
+
+    public Optional<Battle> getActiveBattleForPlanet(String id) {
+        Planet planet = getPlanet(id);
+
+        for (Battle battle : planet.getBattles()) {
+            if (activeBattles.containsKey(battle.getId())) {
+                return Optional.of(battle);
+            }
+        }
+
+        return Optional.empty();
     }
 }

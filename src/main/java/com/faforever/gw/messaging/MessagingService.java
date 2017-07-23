@@ -3,10 +3,13 @@ package com.faforever.gw.messaging;
 import com.faforever.gw.messaging.incoming.AckMessage;
 import com.faforever.gw.messaging.incoming.ErrorMessage;
 import com.faforever.gw.messaging.outgoing.ClientMessage;
+import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.GwException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -15,20 +18,17 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import javax.inject.Inject;
-
 @Service
 @Slf4j
 public class MessagingService {
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final WebSocketClient webSocketClient;
     private final GwWebSocketHandler webSocketHandler;
     private final ObjectMapper jsonObjectMapper;
@@ -36,7 +36,8 @@ public class MessagingService {
     private Map<UUID, CompletableFuture<Void>> pendingRequests;
 
     @Inject
-    public MessagingService(GwWebSocketHandler webSocketHandler, ObjectMapper jsonObjectMapper) {
+    public MessagingService(ApplicationEventPublisher applicationEventPublisher, GwWebSocketHandler webSocketHandler, ObjectMapper jsonObjectMapper) {
+        this.applicationEventPublisher = applicationEventPublisher;
         this.webSocketHandler = webSocketHandler;
         this.jsonObjectMapper = jsonObjectMapper;
         webSocketClient = new StandardWebSocketClient();
@@ -59,6 +60,7 @@ public class MessagingService {
                         log.info("WebSocket handshake successful");
                         currentSession = session;
                         completableFuture.complete(session);
+                        applicationEventPublisher.publishEvent(ClientState.CONNECTED);
                     }
                 });
 

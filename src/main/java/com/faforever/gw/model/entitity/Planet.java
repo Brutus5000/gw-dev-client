@@ -6,6 +6,7 @@ import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,5 +30,9 @@ public class Planet implements Serializable {
         if (o == this) return true;
         if (!(o instanceof Planet)) return false;
         return Objects.equals(id, ((Planet) o).getId());
+    }
+
+    public String toString() {
+        return MessageFormat.format("Planet [ID = {0}]", id);
     }
 }

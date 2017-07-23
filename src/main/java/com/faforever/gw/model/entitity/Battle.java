@@ -8,7 +8,9 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Type("battle")
@@ -28,4 +30,14 @@ public class Battle implements Serializable {
     private Faction attackingFaction;
     private Faction defendingFaction;
     private Faction winningFaction;
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Battle)) return false;
+        return Objects.equals(id, ((Battle) o).getId());
+    }
+
+    public String toString() {
+        return MessageFormat.format("Battle [ID = {0}]", id);
+    }
 }

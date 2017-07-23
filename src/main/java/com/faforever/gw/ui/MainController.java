@@ -1,6 +1,7 @@
 package com.faforever.gw.ui;
 
 import com.faforever.gw.model.ClientState;
+import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.*;
@@ -21,6 +22,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -61,7 +64,10 @@ public class MainController {
     @FXML
     private TableView<Battle> battleTableView;
     @FXML
-    private TreeTableView universeTreeTableView;
+    private TreeTableView<UniverseItemAdapter> universeTreeTableView;
+
+    private String host;
+    private int port;
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
@@ -78,12 +84,16 @@ public class MainController {
     public void onConnectClicked() {
 //        gwClient.connect(String.format("ws://echo.websocket.org",
 
-        String host = hostTextField.getText();
-        int port = Integer.parseInt(portTextField.getText());
+        host = hostTextField.getText();
+        port = Integer.parseInt(portTextField.getText());
 
         universeApiAccessor.connect(host, port);
         gwClient.connect(host, port,
                 userAccessTokenMap.get(userComboBox.getValue()));
+    }
+
+    private void refreshData() {
+        universeApiAccessor.update();
 
         val planets = universeApiAccessor.getPlanets();
 
@@ -154,7 +164,7 @@ public class MainController {
 
         TableColumn column_action = new TableColumn("Action");
         battleTableView.getColumns().add(column_action);
-        column_action.setCellFactory(param -> new ActionButtonCell());
+        column_action.setCellFactory(param -> new BattleActionButtonCell());
 
         battleTableView.setItems(battleData);
     }
@@ -167,14 +177,19 @@ public class MainController {
 
         TreeTableColumn idColumn = new TreeTableColumn("ID");
         idColumn.setCellValueFactory(new TreeItemPropertyValueFactory<UniverseItemAdapter, String>("id"));
-        idColumn.setMinWidth(250);
+        idColumn.setMinWidth(200);
         universeTreeTableView.getColumns().add(idColumn);
 
         TreeTableColumn ownerColumn = new TreeTableColumn("Owner");
         ownerColumn.setCellValueFactory(new TreeItemPropertyValueFactory<UniverseItemAdapter, String>("owner"));
-        ownerColumn.setMinWidth(100);
+        ownerColumn.setMinWidth(50);
         universeTreeTableView.getColumns().add(ownerColumn);
 
+
+        TreeTableColumn actionColumn = new TreeTableColumn("Action");
+        actionColumn.setCellFactory(param -> new UniverseActionButtonCell());
+        actionColumn.setMinWidth(100);
+        universeTreeTableView.getColumns().add(actionColumn);
 
         TreeItem<UniverseItemAdapter> rootTreeItem = new TreeItem<>(new UniverseItemAdapter(new Planet()));
         universeTreeTableView.setRoot(rootTreeItem);
@@ -195,7 +210,6 @@ public class MainController {
 
     public void onDisconnectClicked() {
         gwClient.disconnect();
-        universeApiAccessor.disconnect();
 
         battleData.clear();
         universeTreeTableView.getRoot().getChildren().clear();
@@ -225,6 +239,7 @@ public class MainController {
                 case CONNECTED:
                     characterTextField.setText("");
                     currentBattleTextField.setText("");
+                    refreshData();
                     break;
                 case FREE_FOR_BATTLE:
                     characterTextField.setText(gwClient.getMyCharacter().toString());
@@ -268,7 +283,7 @@ public class MainController {
         Platform.runLater(() -> {
             joinAssaultComboBox.getItems().remove(battleId);
             battleData.stream()
-                    .filter(battle -> battle.getId().equals(battleId.toString()))
+                    .filter(battle -> battle.getId().equals(battleId))
                     .findFirst().ifPresent(battle -> battleData.remove(battle));
         });
     }
@@ -326,16 +341,16 @@ public class MainController {
         return battleId.equals(gwClient.getCurrentBattle().toString());
     }
 
-    private class ActionButtonCell extends TableCell<Battle, Boolean> {
+    private class BattleActionButtonCell extends TableCell<Battle, Boolean> {
         final Button cellButton = new Button("join");
 //
 //        @EventListener
 //        public
 
-        public ActionButtonCell() {
+        public BattleActionButtonCell() {
             cellButton.setOnAction(event -> {
                 try {
-                    Battle battle = (Battle) ActionButtonCell.this.getTableRow().getItem();
+                    Battle battle = (Battle) BattleActionButtonCell.this.getTableRow().getItem();
                     gwClient.joinAssault(UUID.fromString(battle.getId()));
                 } catch (Exception e) {
                     log.error("Error on generating UUID from battleId string", e);
@@ -349,7 +364,7 @@ public class MainController {
         protected void updateItem(Boolean t, boolean empty) {
             super.updateItem(t, empty);
 
-            Battle battle = (Battle) ActionButtonCell.this.getTableRow().getItem();
+            Battle battle = (Battle) BattleActionButtonCell.this.getTableRow().getItem();
             if (!empty && battle != null) {
                 setGraphic(cellButton);
 
@@ -360,6 +375,7 @@ public class MainController {
                         try {
                             gwClient.leaveAssault();
                         } catch (Exception e) {
+                            log.error("Something went wrong on leaving assault", e);
                         }
                     });
                 } else {
@@ -369,9 +385,90 @@ public class MainController {
                         try {
                             gwClient.joinAssault(battle.getId());
                         } catch (Exception e) {
+                            log.error("Something went wrong on joining assault", e);
                         }
                     });
                 }
+            }
+        }
+    }
+
+    private class UniverseActionButtonCell extends TreeTableCell<UniverseItemAdapter, UniverseItemAdapter> {
+        final Button cellButton = new Button();
+
+        public UniverseActionButtonCell() {
+            cellButton.setOnAction(event -> {
+                UniverseItemAdapter item = getTreeTableRow().getItem();
+
+                if (item == null || item.isSolarSystem()) {
+                    return;
+                }
+
+                PlanetAction action = gwClient.getPossibleActionFor(item.getPlanet());
+
+                switch (action) {
+                    case START_ASSAULT:
+                        try {
+                            gwClient.initiateAssault(UUID.fromString(item.getPlanet().getId()));
+                        } catch (IOException e) {
+                            log.error("Initiating assault failed", e);
+                        }
+                        break;
+                    case JOIN_OFFENSE:
+                    case JOIN_DEFENSE:
+                        try {
+                            Battle battle = universeApiAccessor.getActiveBattleForPlanet(item.getPlanet().getId()).get();
+                            gwClient.joinAssault(battle.getId());
+                        } catch (IOException e) {
+                            log.error("Joining battle failed", e);
+                        }
+                        break;
+                    case LEAVE:
+                        try {
+                            gwClient.leaveAssault();
+                        } catch (Exception e) {
+                            log.error("Leaving battle failed", e);
+                        }
+                        break;
+                    case NONE:
+                        throw new IllegalStateException(MessageFormat.format("You can't interact with {0}.", item.getPlanet()));
+                }
+            });
+        }
+
+        @Override
+        @SneakyThrows
+        protected void updateItem(UniverseItemAdapter t, boolean empty) {
+            super.updateItem(t, empty);
+
+            UniverseItemAdapter item = this.getTreeTableRow().getItem();
+
+            setGraphic(null);
+
+            if (item == null || item.isSolarSystem()) {
+                return;
+            }
+
+            PlanetAction action = gwClient.getPossibleActionFor(item.getPlanet());
+            setGraphic(cellButton);
+            cellButton.setVisible(true);
+
+            switch (action) {
+                case START_ASSAULT:
+                    cellButton.setText("start assault");
+                    break;
+                case JOIN_OFFENSE:
+                    cellButton.setText("join assault");
+                    break;
+                case JOIN_DEFENSE:
+                    cellButton.setText("defend");
+                    break;
+                case LEAVE:
+                    cellButton.setText("leave");
+                    break;
+                case NONE:
+                    cellButton.setVisible(false);
+                    break;
             }
         }
     }
