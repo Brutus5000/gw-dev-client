@@ -1,15 +1,16 @@
 package com.faforever.gw.services;
 
 import com.faforever.gw.model.entitity.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jasminb.jsonapi.JSONAPIDocument;
 import com.github.jasminb.jsonapi.ResourceConverter;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.Map;
 import java.util.function.Function;
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class UniverseApiAccessor {
-    private final ObjectMapper jsonObjectMapper;
     private final ResourceConverter resourceConverter;
 
     private Map<String, SolarSystem> solarSystemDict;
@@ -25,18 +25,21 @@ public class UniverseApiAccessor {
     private Map<String, Battle> battleDict;
     @Getter
     private Map<String, Battle> activeBattles;
+    @Value("${gw.server.host}")
     private String host;
+    @Value("${gw.server.port}")
     private int port;
+    @Value("${gw.server.protocol}")
+    private String protocol;
 
     @Inject
-    public UniverseApiAccessor(ObjectMapper jsonObjectMapper) {
-        this.jsonObjectMapper = jsonObjectMapper;
+    public UniverseApiAccessor() {
         this.resourceConverter = new ResourceConverter(SolarSystem.class, Planet.class, Battle.class, BattleParticipant.class, GwCharacter.class);
     }
 
-    public void connect(String host, int port) {
-        this.host = host;
-        this.port = port;
+    @SneakyThrows
+    private URL buildURL(String query) {
+        return new URL(MessageFormat.format("{0}://{1}:{2,number,#}/data/{3}", protocol, host, port, query));
     }
 
     public void update() {
@@ -64,7 +67,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     private List<SolarSystem> querySolarSystems() {
-        URL solarSystemListUrl = new URL(String.format("http://%s:%s/data/solarSystem?include=planets", host, port));
+        URL solarSystemListUrl = buildURL("solarSystem?include=planets");
         JSONAPIDocument<List<SolarSystem>> solarSystemList = resourceConverter.readDocumentCollection(solarSystemListUrl.openStream(), SolarSystem.class);
 
         return solarSystemList.get();
@@ -72,7 +75,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     private List<Battle> queryActiveBattles() {
-        URL battleListUrl = new URL(String.format("http://%s:%s/data/battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')", host, port));
+        URL battleListUrl = buildURL("battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')");
         JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
 
         return battleList.get();
@@ -80,7 +83,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     private Battle queryBattle(String id) {
-        URL battleUrl = new URL(String.format("http://%s:%s/data/battle/%s?include=participants,participants.character", host, port, id));
+        URL battleUrl = buildURL(MessageFormat.format("battle/{0}?include=participants,participants.character", id));
         JSONAPIDocument<Battle> battle = resourceConverter.readDocument(battleUrl.openStream(), Battle.class);
 
         return battle.get();
@@ -88,7 +91,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     private GwCharacter queryCharacter(String id) {
-        URL characterUrl = new URL(String.format("http://%s:%s/data/gwCharacter/%s", host, port, id));
+        URL characterUrl = buildURL(MessageFormat.format("gwCharacter/{0}", id));
         JSONAPIDocument<GwCharacter> character = resourceConverter.readDocument(characterUrl.openStream(), GwCharacter.class);
 
         return character.get();

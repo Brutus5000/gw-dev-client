@@ -36,10 +36,6 @@ public class MainController {
     @FXML
     private ComboBox userComboBox;
     @FXML
-    private TextField hostTextField;
-    @FXML
-    private TextField portTextField;
-    @FXML
     private TextField statusTextField;
     @FXML
     private TextField characterTextField;
@@ -66,8 +62,6 @@ public class MainController {
     @FXML
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
 
-    private String host;
-    private int port;
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
@@ -83,13 +77,7 @@ public class MainController {
 
     public void onConnectClicked() {
 //        gwClient.connect(String.format("ws://echo.websocket.org",
-
-        host = hostTextField.getText();
-        port = Integer.parseInt(portTextField.getText());
-
-        universeApiAccessor.connect(host, port);
-        gwClient.connect(host, port,
-                userAccessTokenMap.get(userComboBox.getValue()));
+        gwClient.connect(userAccessTokenMap.get(userComboBox.getValue()));
     }
 
     private void refreshData() {

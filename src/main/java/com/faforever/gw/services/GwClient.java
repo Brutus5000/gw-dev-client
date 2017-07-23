@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,11 @@ import java.util.*;
 @Slf4j
 @Service
 public class GwClient {
+    @Value("${gw.server.host}")
+    private String host;
+    @Value("${gw.server.port}")
+    private int port;
+
     private final ApplicationEventPublisher applicationEventPublisher;
     private final MessagingService messagingService;
     private final UniverseApiAccessor universeApiAccessor;
@@ -111,7 +117,7 @@ public class GwClient {
         applicationEventPublisher.publishEvent(new PlanetDefendedEvent(universeApiAccessor.getBattle(message.getBattleId())));
     }
 
-    public void connect(String host, int port, String token) {
+    public void connect(String token) {
         String uri = String.format("ws://%s:%s/websocket?accessToken=%s", host, port, token);
         messagingService.connect(uri);
     }

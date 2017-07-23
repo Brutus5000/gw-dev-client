@@ -1,3 +1,8 @@
+gw:
+  server:
+    host: localhost
+    port: 8080
+    protocol: http
 logging:
   level:
     com.faforever.gw: debug
