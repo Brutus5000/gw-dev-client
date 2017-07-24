@@ -2,11 +2,13 @@ package com.faforever.gw.ui;
 
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
+import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.event.*;
+import com.faforever.gw.model.event.BattleChangedEvent;
+import com.faforever.gw.model.event.ErrorEvent;
+import com.faforever.gw.model.event.UniverseLoadedEvent;
 import com.faforever.gw.services.GwClient;
-import com.faforever.gw.services.UniverseApiAccessor;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -65,14 +67,14 @@ public class MainController {
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
-    private final UniverseApiAccessor universeApiAccessor;
+    private final UniverseState universeState;
 
     private Map<String, String> userAccessTokenMap = new TreeMap<>();
 
     @Inject
-    public MainController(GwClient gwClient, UniverseApiAccessor universeApiAccessor) {
+    public MainController(GwClient gwClient, UniverseState universeState) {
         this.gwClient = gwClient;
-        this.universeApiAccessor = universeApiAccessor;
+        this.universeState = universeState;
     }
 
     public void onConnectClicked() {
@@ -81,20 +83,18 @@ public class MainController {
     }
 
     private void refreshData() {
-        universeApiAccessor.update();
-
-        val planets = universeApiAccessor.getPlanets();
+        val planets = universeState.getPlanets();
 
         planets.forEach(planet -> initiateAssaultComboBox.getItems().add(new PlanetWrapper(planet)));
 
-        universeApiAccessor.getActiveBattles().values()
+        universeState.getActiveBattleDict().values()
                 .forEach(battle -> {
                     joinAssaultComboBox.getItems().add(battle.getId());
                     battleData.add(battle);
                 });
 
         TreeItem root = universeTreeTableView.getRoot();
-        universeApiAccessor.getSolarSystems().forEach(
+        universeState.getSolarSystems().forEach(
                 solarSystem -> {
                     TreeItem<UniverseItemAdapter> solarSystemTreeItem = new TreeItem<>(new UniverseItemAdapter(solarSystem));
                     root.getChildren().add(solarSystemTreeItem);
@@ -227,7 +227,6 @@ public class MainController {
                 case CONNECTED:
                     characterTextField.setText("");
                     currentBattleTextField.setText("");
-                    refreshData();
                     break;
                 case FREE_FOR_BATTLE:
                     characterTextField.setText(gwClient.getMyCharacter().toString());
@@ -244,6 +243,11 @@ public class MainController {
                     break;
             }
         });
+    }
+
+    @EventListener
+    public void onUniverseLoaded(UniverseLoadedEvent e) {
+        refreshData();
     }
 
     @SneakyThrows
@@ -267,12 +271,12 @@ public class MainController {
         gwClient.leaveAssault();
     }
 
-    private void removeBattle(String battleId) {
+    private void removeBattle(Battle battle) {
         Platform.runLater(() -> {
-            joinAssaultComboBox.getItems().remove(battleId);
-            battleData.stream()
-                    .filter(battle -> battle.getId().equals(battleId))
-                    .findFirst().ifPresent(battle -> battleData.remove(battle));
+            joinAssaultComboBox.getItems().remove(battle.getId());
+            battleData.remove(battle);
+            battleTableView.refresh();
+            universeTreeTableView.refresh();
         });
     }
 
@@ -288,37 +292,24 @@ public class MainController {
     }
 
     @EventListener
-    private void onPlanetConquered(PlanetConqueredEvent event) {
-        Platform.runLater(() -> removeBattle(event.getBattle().getId()));
-    }
-
-    @EventListener
-    private void onPlanetDefended(PlanetDefendedEvent event) {
-        Platform.runLater(() -> removeBattle(event.getBattle().getId()));
-    }
-
-    @EventListener
-    private void onNewBattle(NewBattleEvent event) {
-        Platform.runLater(() -> {
-            battleData.add(event.getBattle());
-            if (event.getBattle().getId().equals(gwClient.getCurrentBattle())) {
-                log.debug("Ignore PlanetUnderAssaultMessage: it's our own battle");
-            } else {
-                log.debug("Received PlanetUnderAssaultMessage - add to joinable battles");
-                joinAssaultComboBox.getItems().add(event.getBattle().getId());
-            }
-        });
-    }
-
-    @EventListener
-    private void onBattleWaitingProgressUpdate(BattleUpdateWaitingProgressEvent event) {
-        Platform.runLater(() -> {
-            battleData.stream()
-                    .filter(battle -> battle.getId().equals(event.getBattleId().toString()))
-                    .forEach(battle -> battle.setWaitingProgress(event.getWaitingProgress()));
-
-            battleTableView.refresh();
-        });
+    private void onBattleChanged(BattleChangedEvent event) {
+        Battle battle = event.getBattle();
+        switch (battle.getStatus()) {
+            case INITIATED:
+                if (event.isNewBattle()) {
+                    battleData.add(battle);
+                }
+            case RUNNING:
+                Platform.runLater(() -> {
+                    battleTableView.refresh();
+                    universeTreeTableView.refresh();
+                });
+                break;
+            case CANCELED:
+            case FINISHED:
+                removeBattle(battle);
+        }
+        ;
     }
 
     @SneakyThrows
@@ -405,7 +396,7 @@ public class MainController {
                     case JOIN_OFFENSE:
                     case JOIN_DEFENSE:
                         try {
-                            Battle battle = universeApiAccessor.getActiveBattleForPlanet(item.getPlanet().getId()).get();
+                            Battle battle = universeState.getActiveBattleForPlanet(item.getPlanet().getId()).get();
                             gwClient.joinAssault(battle.getId());
                         } catch (IOException e) {
                             log.error("Joining battle failed", e);

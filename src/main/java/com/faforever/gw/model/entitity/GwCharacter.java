@@ -1,6 +1,7 @@
 package com.faforever.gw.model.entitity;
 
 import com.github.jasminb.jsonapi.annotations.Id;
+import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class GwCharacter implements Serializable {
     private String name;
     private Faction faction;
     private Long xp;
+    @Relationship("battleParticipantList")
     private List<BattleParticipant> battleParticipantList = new ArrayList<>();
     private GwCharacter killer;
     private Set<GwCharacter> killedBy;

@@ -8,16 +8,15 @@ import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
 import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
-import com.faforever.gw.model.entitity.Battle;
-import com.faforever.gw.model.entitity.Faction;
-import com.faforever.gw.model.entitity.GwCharacter;
-import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.event.BattleUpdateWaitingProgressEvent;
+import com.faforever.gw.model.UniverseState;
+import com.faforever.gw.model.entitity.*;
+import com.faforever.gw.model.event.BattleChangedEvent;
 import com.faforever.gw.model.event.ErrorEvent;
-import com.faforever.gw.model.event.NewBattleEvent;
-import com.faforever.gw.model.event.PlanetDefendedEvent;
+import com.faforever.gw.model.event.PlanetChangedEvent;
+import com.faforever.gw.model.event.UniverseLoadedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +27,9 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,7 +41,8 @@ public class GwClient {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final MessagingService messagingService;
-    private final UniverseApiAccessor universeApiAccessor;
+    private final UniverseState universeState;
+    private final UniverseApiAccessor api;
     private Map<UUID, ClientMessage> pendingMessages = new HashMap<>();
     private ClientState clientState;
     @Getter
@@ -48,15 +51,24 @@ public class GwClient {
     private GwCharacter myCharacter;
 
     @Inject
-    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseApiAccessor universeApiAccessor) {
+    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseState universeState, UniverseApiAccessor api) {
         this.applicationEventPublisher = applicationEventPublisher;
         this.messagingService = messagingService;
-        this.universeApiAccessor = universeApiAccessor;
+        this.universeState = universeState;
+        this.api = api;
+    }
+
+    private Battle getBattle(UUID id) {
+        return universeState.getBattleFromCache(id)
+                .orElse(loadBattle(id));
     }
 
     @EventListener
     private void onHello(HelloMessage message) {
-        myCharacter = universeApiAccessor.getCharacter(message.getCharacterId());
+        loadUniverseFromApi();
+        myCharacter = api.queryCharacter(message.getCharacterId().toString());
+        universeState.addToCache(myCharacter);
+
         currentBattle = message.getCurrentBattleId();
         if (currentBattle == null) {
             clientState = ClientState.FREE_FOR_BATTLE;
@@ -65,6 +77,60 @@ public class GwClient {
         }
         log.debug("New client state: {}", clientState);
         applicationEventPublisher.publishEvent(clientState);
+        applicationEventPublisher.publishEvent(new UniverseLoadedEvent());
+    }
+
+    @SneakyThrows
+    private void loadUniverseFromApi() {
+        Map<String, SolarSystem> solarSystemDict = api.querySolarSystems().stream()
+                .collect(Collectors.toMap(SolarSystem::getId, Function.identity()));
+
+        Map<String, Planet> planetDict = solarSystemDict.values().stream()
+                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
+                .collect(Collectors.toMap(Planet::getId, Function.identity()));
+
+
+        Map<String, Battle> activeBattleDict = api.queryActiveBattles().stream()
+                .collect(Collectors.toMap(Battle::getId, Function.identity()));
+
+        universeState.init(solarSystemDict, planetDict, activeBattleDict);
+
+        activeBattleDict.values().forEach(this::incorporate);
+
+    }
+
+    private Battle loadBattle(UUID id) {
+        Battle battle = api.queryBattle(id.toString());
+        incorporate(battle);
+        return battle;
+    }
+
+    private GwCharacter loadCharacter(UUID id) {
+        GwCharacter character = api.queryCharacter(id.toString());
+        universeState.addToCache(character);
+        return character;
+    }
+
+    /**
+     * Incorporate the battle into the existing universe
+     * (important: the planet object was created a second time, this removes the redundancy)
+     *
+     * @param battle
+     */
+    private void incorporate(Battle battle) {
+        universeState.addToCache(battle);
+        Planet planet = universeState.getPlanet(battle.getPlanet().getId());
+        battle.setPlanet(planet);
+        // attach the active battle to the planet
+        if (planet.getBattles().stream()
+                .noneMatch(planetBattle -> Objects.equals(planetBattle.getId(), battle.getId()))) {
+            planet.getBattles().add(battle);
+        }
+
+        if ((battle.getStatus() == BattleStatus.INITIATED || battle.getStatus() == BattleStatus.RUNNING)
+                && !universeState.getActiveBattleDict().containsKey(battle.getId())) {
+            universeState.getActiveBattleDict().put(battle.getId(), battle);
+        }
     }
 
     @EventListener
@@ -75,46 +141,76 @@ public class GwClient {
 
     @EventListener
     private void onBattleParticipantJoined(BattleParticipantJoinedAssaultMessage message) {
-        universeApiAccessor.update();
-        if (message.getCharacterId().equals(myCharacter)) {
+        ClientState oldState = clientState;
+        if (Objects.equals(message.getCharacterId().toString(), myCharacter.getId())) {
             clientState = ClientState.IN_ASSAULT;
             currentBattle = message.getBattleId();
+        }
+
+        Battle battle = getBattle(message.getBattleId());
+        BattleParticipant participant = new BattleParticipant();
+        GwCharacter character = universeState.getCharacterFromCache(message.getCharacterId())
+                .orElse(loadCharacter(message.getCharacterId()));
+
+        participant.setRole(battle.getAttackingFaction() == character.getFaction() ? BattleRole.ATTACKER : BattleRole.DEFENDER);
+        participant.setBattle(battle);
+        participant.setCharacter(character);
+
+        battle.getParticipants().add(participant);
+
+        applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
+
+        if (oldState != clientState) {
             applicationEventPublisher.publishEvent(clientState);
         }
     }
 
     @EventListener
     private void onBattleParticipantLeft(BattleParticipantLeftAssaultMessage message) {
-        universeApiAccessor.update();
-        if (message.getCharacterId().equals(myCharacter)) {
+        ClientState oldState = clientState;
+        if (Objects.equals(message.getCharacterId().toString(), myCharacter.getId())) {
             clientState = ClientState.FREE_FOR_BATTLE;
             currentBattle = null;
+        }
+
+        Battle battle = getBattle(message.getBattleId());
+        battle.getParticipants().removeIf(battleParticipant ->
+                Objects.equals(battleParticipant.getCharacter().getId(), message.getCharacterId().toString()));
+
+        applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
+
+        if (oldState != clientState) {
             applicationEventPublisher.publishEvent(clientState);
         }
     }
 
     @EventListener
     private void onPlanetConquered(PlanetConqueredMessage message) {
-        universeApiAccessor.update();
-        if (message.getBattleId().equals(currentBattle)) {
+        battleEnded(message.getBattleId(), message.getAttackingFaction());
+    }
+
+    @EventListener
+    private void onPlanetDefended(PlanetDefendedMessage message) {
+        battleEnded(message.getBattleId(), message.getDefendingFaction());
+    }
+
+    private void battleEnded(UUID battleId, Faction winningFaction) {
+        if (battleId.equals(currentBattle)) {
+            currentBattle = null;
             clientState = ClientState.FREE_FOR_BATTLE;
             log.debug("Current battle - planet conquered -> New client state: {}", clientState);
             applicationEventPublisher.publishEvent(clientState);
         }
 
-        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(universeApiAccessor.getBattle(message.getBattleId())));
-    }
+        Battle battle = getBattle(battleId);
+        Planet planet = battle.getPlanet();
 
-    @EventListener
-    private void onPlanetDefended(PlanetDefendedMessage message) {
-        universeApiAccessor.update();
-        if (message.getBattleId().equals(currentBattle)) {
-            clientState = ClientState.FREE_FOR_BATTLE;
-            log.debug("Current battle - planet defended -> New client state: {}", clientState);
-            applicationEventPublisher.publishEvent(clientState);
-        }
+        battle.setStatus(BattleStatus.FINISHED);
+        universeState.getActiveBattleDict().remove(battle.getId());
+        planet.setCurrentOwner(winningFaction);
 
-        applicationEventPublisher.publishEvent(new PlanetDefendedEvent(universeApiAccessor.getBattle(message.getBattleId())));
+        applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
+        applicationEventPublisher.publishEvent(new PlanetChangedEvent(planet));
     }
 
     public void connect(String token) {
@@ -155,47 +251,49 @@ public class GwClient {
 
     @EventListener
     private void onPlanetUnderAssault(PlanetUnderAssaultMessage message) {
-        universeApiAccessor.update();
-        val battle = universeApiAccessor.getBattle(message.getBattleId());
-        applicationEventPublisher.publishEvent(new NewBattleEvent(battle));
+        val battle = getBattle(message.getBattleId());
+        applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, true));
     }
 
     @EventListener
     private void onBattleWaitingProgressUpdate(BattleUpdateWaitingProgressMessage message) {
-        applicationEventPublisher.publishEvent(new BattleUpdateWaitingProgressEvent(message.getBattleId(), message.getWaitingProgress()));
+        Battle battle = getBattle(message.getBattleId());
+        battle.setWaitingProgress(message.getWaitingProgress());
+        applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
     }
 
 
     public PlanetAction getPossibleActionFor(Planet planet) {
         Faction myFaction = getMyCharacter().getFaction();
 
-        Optional<Battle> battleOptional = universeApiAccessor.getActiveBattleForPlanet(planet.getId());
+        Optional<Battle> battleOptional = universeState.getActiveBattleForPlanet(planet.getId());
 
         if (battleOptional.isPresent()) {
             Battle battle = battleOptional.get();
 
-            if (getCurrentBattle() == null) {
-                if (battle.getAttackingFaction() == myFaction) {
-                    // TODO: Check for open slots
-                    return PlanetAction.JOIN_OFFENSE;
+            if (battle.getStatus() == BattleStatus.INITIATED) {
+                if (getCurrentBattle() == null) {
+                    if (battle.getAttackingFaction() == myFaction) {
+                        // TODO: Check for open slots
+                        return PlanetAction.JOIN_OFFENSE;
+                    }
+
+                    if (battle.getDefendingFaction() == myFaction) {
+                        // TODO: Check for open slots
+                        return PlanetAction.JOIN_DEFENSE;
+                    }
+
+                    // your faction is not involved in this battle
+                    return PlanetAction.NONE;
                 }
 
-                if (battle.getDefendingFaction() == myFaction) {
-                    // TODO: Check for open slots
-                    return PlanetAction.JOIN_DEFENSE;
+                if (Objects.equals(battle.getId(), getCurrentBattle().toString())) {
+                    return PlanetAction.LEAVE;
                 }
 
-                // your faction is not involved in this battle
+                // you can't do anything else until you leave the current battle (which is somewhere else)
                 return PlanetAction.NONE;
             }
-
-            if (Objects.equals(battle.getId(), getCurrentBattle().toString())) {
-                return PlanetAction.LEAVE;
-            }
-
-            // you can't do anything else until you leave the current battle (which is somewhere else)
-            return PlanetAction.NONE;
-
         }
 
         if (planet.getCurrentOwner() != myFaction) {
