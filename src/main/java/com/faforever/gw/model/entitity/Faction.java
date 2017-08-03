@@ -1,7 +1,8 @@
 package com.faforever.gw.model.entitity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,11 +23,15 @@ public enum Faction {
         }
     }
 
-    @Getter
     private final String name;
 
+    @JsonCreator
     public static Faction fromString(String string) {
         return fromName.get(string);
     }
 
+    @JsonValue
+    public String getName() {
+        return this.name;
+    }
 }

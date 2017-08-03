@@ -2,18 +2,12 @@ package com.faforever.gw.services;
 
 import com.faforever.gw.messaging.MessagingService;
 import com.faforever.gw.messaging.incoming.*;
-import com.faforever.gw.messaging.outgoing.ClientMessage;
-import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
-import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
-import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
+import com.faforever.gw.messaging.outgoing.*;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.*;
-import com.faforever.gw.model.event.BattleChangedEvent;
-import com.faforever.gw.model.event.ErrorEvent;
-import com.faforever.gw.model.event.PlanetChangedEvent;
-import com.faforever.gw.model.event.UniverseLoadedEvent;
+import com.faforever.gw.model.event.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -65,16 +59,24 @@ public class GwClient {
 
     @EventListener
     private void onHello(HelloMessage message) {
-        loadUniverseFromApi();
-        myCharacter = api.queryCharacter(message.getCharacterId().toString());
-        universeState.addToCache(myCharacter);
-
-        currentBattle = message.getCurrentBattleId();
-        if (currentBattle == null) {
-            clientState = ClientState.FREE_FOR_BATTLE;
-        } else {
-            clientState = ClientState.IN_ASSAULT;
+        if (clientState == null || clientState == ClientState.DISCONNECTED) {
+            loadUniverseFromApi();
         }
+
+        clientState = ClientState.CONNECTED;
+
+        if (message.getCharacterId() != null) {
+            myCharacter = api.queryCharacter(message.getCharacterId().toString());
+            universeState.addToCache(myCharacter);
+
+            currentBattle = message.getCurrentBattleId();
+            if (currentBattle == null) {
+                clientState = ClientState.FREE_FOR_BATTLE;
+            } else {
+                clientState = ClientState.IN_ASSAULT;
+            }
+        }
+
         log.debug("New client state: {}", clientState);
         applicationEventPublisher.publishEvent(clientState);
         applicationEventPublisher.publishEvent(new UniverseLoadedEvent());
@@ -225,6 +227,14 @@ public class GwClient {
         applicationEventPublisher.publishEvent(clientState);
     }
 
+    public void requestCharacter(Faction faction) throws IOException {
+        messagingService.send(new RequestCharacterMessage(faction));
+    }
+
+    public void selectName(UUID requestId, String name) throws IOException {
+        messagingService.send(new SelectCharacterNameMessage(requestId, name));
+    }
+
     public void initiateAssault(UUID planetId) throws IOException {
         messagingService.send(new InitiateAssaultMessage(planetId))
                 .thenAccept(aVoid -> {
@@ -303,6 +313,11 @@ public class GwClient {
 
         // it's your factions planet - no action
         return PlanetAction.NONE;
+    }
+
+    @EventListener
+    public void onCharacterNameProposal(CharacterNameProposalMessage message) {
+        applicationEventPublisher.publishEvent(new CharacterNameProposalEvent(message.getRequestId(), message.getProposedNamesList()));
     }
 }
 
