@@ -4,8 +4,10 @@ import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.Battle;
+import com.faforever.gw.model.entitity.Faction;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.event.BattleChangedEvent;
+import com.faforever.gw.model.event.CharacterNameProposalEvent;
 import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.UniverseLoadedEvent;
 import com.faforever.gw.services.GwClient;
@@ -63,6 +65,16 @@ public class MainController {
     private TableView<Battle> battleTableView;
     @FXML
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
+    @FXML
+    private ComboBox requestCharacterFactionComboBox;
+    @FXML
+    private Button requestCharacterSendButton;
+    @FXML
+    private TextField selectNameRequestIdTextField;
+    @FXML
+    private ComboBox selectNameProposalComboBox;
+    @FXML
+    private Button selectNameProposalButton;
 
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
@@ -107,11 +119,16 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        for (Faction f : Faction.values()) {
+            requestCharacterFactionComboBox.getItems().add(f);
+        }
+
         userAccessTokenMap.put("-1- UEF Alpha", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMSwgInVzZXJfbmFtZSI6ICJVRUYgQWxwaGEiLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.qlA-HIEU9zQ7OA_eAqfYAG5MZmhe7TBqV9zVnJgV2wY");
         userAccessTokenMap.put("-2- UEF Bravo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMiwgInVzZXJfbmFtZSI6ICJVRUYgQnJhdm8iLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.ZHwO6jvcHPd0fhBFSaJTQpt-S8Zmwa6unPW0qHkzLKw");
         userAccessTokenMap.put("-3- Cybran Charlie", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMywgInVzZXJfbmFtZSI6ICJDeWJyYW4gQ2hhcmxpZSIsICJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwgImV4cCI6IDQxMDI0NDQ3NDB9.qPE-UkG8tSdH4fMzD6RWkGHSYoH24SluvsPcfN9GX4A");
         userAccessTokenMap.put("-4- Cybran Delta", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA0LCAidXNlcl9uYW1lIjogIkN5YnJhbiBEZWx0YSJ9.5LwaskFvNLwRvIUIfvc0s2WUHP_Q1NlaUjY4hGN0Lv4");
         userAccessTokenMap.put("-5- Aeon Echo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA1LCAidXNlcl9uYW1lIjogIkFlb24gRWNobyJ9.Kv1en5p2bWb6zE2ag6PWp4u1WxR6F8HPZSweDG23p60");
+        userAccessTokenMap.put("-X- Unregistered User", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA5OSwgInVzZXJfbmFtZSI6ICJVbnJlZ2lzdGVyZWQgdXNlciJ9.skNv5W3lgqq_OETwAeGDrlSDaKxq-Lqt2jrIspUI9Ik");
 
         userAccessTokenMap.keySet().forEach(s -> userComboBox.getItems().add(s));
         userComboBox.setValue("-1- UEF Alpha");
@@ -269,6 +286,11 @@ public class MainController {
     @SneakyThrows
     public void onLeaveAssaultButtonClicked() {
         gwClient.leaveAssault();
+    }
+
+    @SneakyThrows
+    public void onRequestCharacterSendButtonClicked() {
+        gwClient.requestCharacter((Faction) requestCharacterFactionComboBox.getValue());
     }
 
     private void removeBattle(Battle battle) {
@@ -449,6 +471,26 @@ public class MainController {
                     cellButton.setVisible(false);
                     break;
             }
+        }
+    }
+
+    @EventListener
+    public void onCharacterNameProposal(CharacterNameProposalEvent event) {
+        Platform.runLater(() -> {
+            selectNameRequestIdTextField.setText(event.getRequestId().toString());
+            selectNameProposalComboBox.getItems().clear();
+
+            for (String name : event.getProposedNamesList()) {
+                selectNameProposalComboBox.getItems().add(name);
+            }
+        });
+    }
+
+    public void onSelectNameProposalButtonClicked() {
+        try {
+            gwClient.selectName(UUID.fromString(selectNameRequestIdTextField.getText()), (String) selectNameProposalComboBox.getValue());
+        } catch (IOException e) {
+            log.error("Something went wrong on selecting character name", e);
         }
     }
 }

@@ -1,9 +1,7 @@
 package com.faforever.gw.messaging;
 
 import com.faforever.gw.messaging.incoming.*;
-import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
-import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
-import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
+import com.faforever.gw.messaging.outgoing.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +12,7 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public enum MessageType {
-    // Outgoing messaging -->
+    // Incoming messaging -->
     ACK("ack", Audience.PRIVATE, AckMessage.class),
     ERROR("error", Audience.PRIVATE, ErrorMessage.class),
     PLANET_ATTACKED("planet.attacked", Audience.PUBLIC, PlanetUnderAssaultMessage.class),
@@ -25,14 +23,18 @@ public enum MessageType {
     BATTLE_PARTICIPANT_LEFT("battle.participant_left", Audience.PUBLIC, BattleParticipantLeftAssaultMessage.class),
     CHARACTER_PROMOTION("character.promotion", Audience.PUBLIC, CharacterPromotionMessage.class),
     HELLO("user.hello", Audience.PRIVATE, HelloMessage.class),
+    CHARACTER_NAME_PROPOSAL("character.name_proposal", Audience.PRIVATE, CharacterNameProposalMessage.class),
+    CHARACTER_JOINED_GW("character.new", Audience.PUBLIC, CharacterJoinedGwMessage.class),
     //    FACTION_CHAT_MESSAGE("faction.chat_message", Audience.FACTION),
     USER_INCOME("user.income", Audience.PRIVATE, UserIncomeMessage.class),
 //    USER_XP("user.xp", Audience.PRIVATE);
 
-    // Incoming messaging (User actions) -->
+    // Outgoing messaging (User actions) -->
     ACTION_INITIATE_ASSAULT("initiateAssault", null, InitiateAssaultMessage.class),
     ACTION_JOIN_ASSAULT("joinAssault", null, JoinAssaultMessage.class),
-    ACTION_LEAVE_ASSAULT("leaveAssault", null, LeaveAssaultMessage.class);
+    ACTION_LEAVE_ASSAULT("leaveAssault", null, LeaveAssaultMessage.class),
+    ACTION_REQUEST_CHARACTER("requestCharacter", null, RequestCharacterMessage.class),
+    ACTION_SELECT_CHARACTER_NAME("selectCharacterName", null, SelectCharacterNameMessage.class);
 
     @Getter(value = AccessLevel.NONE)
     private static final Map<String, Class> messageTypeByAction = new HashMap<>();

@@ -93,6 +93,7 @@ public class MessagingService {
         CompletableFuture<Void> future = new CompletableFuture<>();
         future.runAsync(() -> {
                     try {
+                        log.debug("Send message: {}", message);
                         currentSession.sendMessage(box(message));
                     } catch (JsonProcessingException e) {
                         log.error("Error on converting message to string", e);
