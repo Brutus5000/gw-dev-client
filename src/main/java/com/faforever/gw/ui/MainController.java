@@ -9,6 +9,7 @@ import com.faforever.gw.model.event.BattleChangedEvent;
 import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.UniverseLoadedEvent;
 import com.faforever.gw.services.GwClient;
+import com.faforever.gw.ui.universe.SolarSystemController;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +18,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.scene.layout.Pane;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -33,6 +35,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class MainController {
+    private final UiService uiService;
     private GwClient gwClient;
 
     @FXML
@@ -63,6 +66,8 @@ public class MainController {
     private TableView<Battle> battleTableView;
     @FXML
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
+    @FXML
+    private Pane universeEditorPane;
 
 
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
@@ -72,7 +77,8 @@ public class MainController {
     private Map<String, String> userAccessTokenMap = new TreeMap<>();
 
     @Inject
-    public MainController(GwClient gwClient, UniverseState universeState) {
+    public MainController(UiService uiService, GwClient gwClient, UniverseState universeState) {
+        this.uiService = uiService;
         this.gwClient = gwClient;
         this.universeState = universeState;
     }
@@ -101,6 +107,11 @@ public class MainController {
                     solarSystem.getPlanets().forEach(
                             planet -> solarSystemTreeItem.getChildren().add(new TreeItem<>(new UniverseItemAdapter(planet)))
                     );
+
+
+                    SolarSystemController solarSystemController = uiService.loadFxml("/solarSystem.fxml");
+                    universeEditorPane.getChildren().add(solarSystemController.getRoot());
+                    solarSystemController.setSolarSystem(solarSystem);
                 }
         );
     }
@@ -247,7 +258,8 @@ public class MainController {
 
     @EventListener
     public void onUniverseLoaded(UniverseLoadedEvent e) {
-        refreshData();
+        Platform.runLater(this::refreshData);
+        ;
     }
 
     @SneakyThrows

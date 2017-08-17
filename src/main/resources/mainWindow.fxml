@@ -3,8 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<HBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.111"
-      fx:controller="com.faforever.gw.ui.MainController">
+<HBox xmlns:fx="http://javafx.com/fxml/1" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+      xmlns="http://javafx.com/javafx/8.0.111" fx:controller="com.faforever.gw.ui.MainController">
     <children>
         <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
             <children>
@@ -107,9 +107,9 @@
                 </TitledPane>
             </children>
         </VBox>
-        <VBox>
+        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
             <children>
-                <TabPane>
+                <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
                     <tabs>
                         <Tab text="Battles">
                             <content>
@@ -119,6 +119,12 @@
                         <Tab text="Universe">
                             <content>
                                 <TreeTableView fx:id="universeTreeTableView" prefHeight="200.0" prefWidth="200.0"/>
+                            </content>
+                        </Tab>
+                        <Tab closable="false" text="Universe Editor">
+                            <content>
+                                <Pane fx:id="universeEditorPane" maxHeight="1.7976931348623157E308"
+                                      maxWidth="1.7976931348623157E308"/>
                             </content>
                         </Tab>
                     </tabs>

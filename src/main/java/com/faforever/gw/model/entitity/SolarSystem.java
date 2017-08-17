@@ -15,6 +15,7 @@ import java.util.Objects;
 public class SolarSystem implements Serializable {
     @Id
     private String id;
+    private String name;
     private long x;
     private long y;
     private long z;
