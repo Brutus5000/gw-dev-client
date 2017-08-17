@@ -8,11 +8,11 @@
 <StackPane xmlns:fx="http://javafx.com/fxml/1" fx:id="solarSystemRoot" alignment="TOP_LEFT" cacheShape="false"
            xmlns="http://javafx.com/javafx/8.0.111" fx:controller="com.faforever.gw.ui.universe.SolarSystemController">
     <children>
-        <Circle fx:id="planetCircle" radius="25.0" stroke="BLACK" strokeType="INSIDE"/>
+        <Circle fx:id="planetCircle" radius="10.0" stroke="BLACK" strokeType="INSIDE"/>
         <VBox alignment="CENTER" mouseTransparent="true">
             <children>
-                <Label fx:id="coordinatesLabel" mouseTransparent="true" text="(x, y, z)" textAlignment="CENTER"
-                       textFill="WHITE" wrapText="true">
+                <Label fx:id="planetCountLabel" mouseTransparent="true" text="N" textAlignment="CENTER" textFill="WHITE"
+                       wrapText="true">
                     <font>
                         <Font name="System Bold" size="12.0"/>
                     </font>

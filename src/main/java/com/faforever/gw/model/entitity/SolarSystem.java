@@ -23,6 +23,9 @@ public class SolarSystem implements Serializable {
     @Relationship("planets")
     private List<Planet> planets;
 
+    @Relationship("connectedSystems")
+    private List<SolarSystem> connectedSystems;
+
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof SolarSystem)) return false;

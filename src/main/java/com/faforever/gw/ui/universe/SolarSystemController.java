@@ -10,13 +10,16 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 @Component
 @Scope("prototype")
@@ -30,23 +33,30 @@ public class SolarSystemController implements Controller<Pane> {
     private final static Color SELECTED_COLOR = Color.GREEN;
 
     @Getter
+    private List<Line> connectionLines = new ArrayList<>();
+
+    @Getter
     @NonNull
     private SolarSystem solarSystem;
     @FXML
     private StackPane solarSystemRoot;
     @FXML
-    private Label coordinatesLabel;
+    private Label planetCountLabel;
     @FXML
     private Circle planetCircle;
 
     private boolean isHovered = false;
     private boolean isSelected = false;
+    private Consumer<Boolean> onSelectionChangedListener;
 
+    public void setSelectionChangedListener(Consumer<Boolean> onSelectionChangedListener) {
+        this.onSelectionChangedListener = onSelectionChangedListener;
+    }
 
     public void setSolarSystem(SolarSystem solarSystem) {
         this.solarSystem = solarSystem;
 
-        coordinatesLabel.setText(MessageFormat.format("({0},{1},{2})", solarSystem.getX(), solarSystem.getY(), solarSystem.getZ()));
+        planetCountLabel.setText(Integer.toString(solarSystem.getPlanets().size()));
 
         planetCircle.setFill(DEFAULT_COLOR);
 
@@ -62,6 +72,10 @@ public class SolarSystemController implements Controller<Pane> {
 
         planetCircle.setOnMouseClicked(event -> {
             isSelected = !isSelected;
+
+            if (onSelectionChangedListener != null)
+                onSelectionChangedListener.accept(isSelected);
+
             invalidate();
         });
 

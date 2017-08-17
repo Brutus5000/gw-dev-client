@@ -4,12 +4,16 @@ import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.Battle;
+import com.faforever.gw.model.entitity.Faction;
 import com.faforever.gw.model.entitity.Planet;
+import com.faforever.gw.model.entitity.SolarSystem;
 import com.faforever.gw.model.event.BattleChangedEvent;
 import com.faforever.gw.model.event.ErrorEvent;
 import com.faforever.gw.model.event.UniverseLoadedEvent;
 import com.faforever.gw.services.GwClient;
+import com.faforever.gw.ui.universe.ConnectionLine;
 import com.faforever.gw.ui.universe.SolarSystemController;
+import com.faforever.gw.ui.universe.UniverseItemAdapter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -28,9 +32,8 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -68,8 +71,11 @@ public class MainController {
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
     @FXML
     private Pane universeEditorPane;
-
-
+    Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
+    @FXML
+    private ComboBox<Faction> universeEditorFactionComboBox;
+    private List<SolarSystem> selectedSolarSystems = new ArrayList<>();
+    private List<ConnectionLine> connectionLines = new ArrayList<>();
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
     private final UniverseState universeState;
@@ -100,6 +106,7 @@ public class MainController {
                 });
 
         TreeItem root = universeTreeTableView.getRoot();
+
         universeState.getSolarSystems().forEach(
                 solarSystem -> {
                     TreeItem<UniverseItemAdapter> solarSystemTreeItem = new TreeItem<>(new UniverseItemAdapter(solarSystem));
@@ -112,12 +119,35 @@ public class MainController {
                     SolarSystemController solarSystemController = uiService.loadFxml("/solarSystem.fxml");
                     universeEditorPane.getChildren().add(solarSystemController.getRoot());
                     solarSystemController.setSolarSystem(solarSystem);
+                    solarSystemController.setSelectionChangedListener(isSelected -> {
+                        if (isSelected) {
+                            selectedSolarSystems.add(solarSystem);
+                        } else {
+                            selectedSolarSystems.remove(solarSystem);
+                        }
+                    });
+
+                    controllerMap.put(solarSystem, solarSystemController);
                 }
         );
+
+        for (SolarSystem from : universeState.getSolarSystems()) {
+            for (SolarSystem to : from.getConnectedSystems()) {
+                if (connectionLines.stream().filter(connectionLine -> connectionLine.connects(from, to)).count() > 0)
+                    continue;
+
+                ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+                universeEditorPane.getChildren().add(connectionLine);
+                connectionLine.toBack();
+                connectionLines.add(connectionLine);
+            }
+        }
     }
 
     @FXML
     public void initialize() {
+        universeEditorFactionComboBox.getItems().addAll(Faction.values());
+
         userAccessTokenMap.put("-1- UEF Alpha", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMSwgInVzZXJfbmFtZSI6ICJVRUYgQWxwaGEiLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.qlA-HIEU9zQ7OA_eAqfYAG5MZmhe7TBqV9zVnJgV2wY");
         userAccessTokenMap.put("-2- UEF Bravo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMiwgInVzZXJfbmFtZSI6ICJVRUYgQnJhdm8iLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.ZHwO6jvcHPd0fhBFSaJTQpt-S8Zmwa6unPW0qHkzLKw");
         userAccessTokenMap.put("-3- Cybran Charlie", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMywgInVzZXJfbmFtZSI6ICJDeWJyYW4gQ2hhcmxpZSIsICJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwgImV4cCI6IDQxMDI0NDQ3NDB9.qPE-UkG8tSdH4fMzD6RWkGHSYoH24SluvsPcfN9GX4A");
@@ -462,6 +492,63 @@ public class MainController {
                     break;
             }
         }
+    }
+
+    public void onLinkClicked() {
+        log.debug("Link clicked");
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        for (SolarSystem from : selectedSolarSystems) {
+            for (SolarSystem to : selectedSolarSystems) {
+                if (from == to)
+                    continue;
+
+                if (from.getConnectedSystems().contains(to) || to.getConnectedSystems().contains(from))
+                    continue;
+
+                from.getConnectedSystems().add(to);
+                to.getConnectedSystems().add(from);
+
+                ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+                connectionLines.add(connectionLine);
+                universeEditorPane.getChildren().add(connectionLine);
+                connectionLine.toBack();
+            }
+        }
+    }
+
+    public void onUnlinkClicked() {
+        log.debug("Unlink clicked");
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        for (SolarSystem from : selectedSolarSystems) {
+            for (SolarSystem to : selectedSolarSystems) {
+                if (from == to)
+                    continue;
+
+                if (!from.getConnectedSystems().contains(to))
+                    continue;
+
+                from.getConnectedSystems().remove(to);
+                to.getConnectedSystems().remove(from);
+
+                connectionLines.stream()
+                        .filter(connectionLine -> connectionLine.connects(from, to))
+                        .collect(Collectors.toList())
+                        .forEach(connectionLine -> {
+                            connectionLine.unlink();
+                            universeEditorPane.getChildren().remove(connectionLine);
+                            connectionLines.remove(connectionLine);
+                        });
+
+                ConnectionLine line = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+            }
+        }
+    }
+
+    public void onSetFactionClicked() {
+        log.debug("SetFaction clicked for faction {}", universeEditorFactionComboBox.getSelectionModel().getSelectedItem());
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
     }
 }
 

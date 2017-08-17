@@ -35,7 +35,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public List<SolarSystem> querySolarSystems() {
-        URL solarSystemListUrl = buildURL("solarSystem?include=planets");
+        URL solarSystemListUrl = buildURL("solarSystem?include=connectedSystems,planets");
         JSONAPIDocument<List<SolarSystem>> solarSystemList = resourceConverter.readDocumentCollection(solarSystemListUrl.openStream(), SolarSystem.class);
 
         return solarSystemList.get();

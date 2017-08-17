@@ -1,4 +1,4 @@
-package com.faforever.gw.ui;
+package com.faforever.gw.ui.universe;
 
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.entitity.SolarSystem;
