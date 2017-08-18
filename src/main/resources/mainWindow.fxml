@@ -4,9 +4,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <HBox xmlns:fx="http://javafx.com/fxml/1" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-      xmlns="http://javafx.com/javafx/8.0.111" fx:controller="com.faforever.gw.ui.MainController">
+      minWidth="1500.0" xmlns="http://javafx.com/javafx/8.0.111" fx:controller="com.faforever.gw.ui.MainController">
     <children>
-        <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+        <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="ALWAYS">
             <children>
                 <TitledPane animated="false" text="Connection">
                     <content>
@@ -127,7 +127,7 @@
                                     <children>
                                         <Pane fx:id="universeEditorPane" maxHeight="1.7976931348623157E308"
                                               maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
-                                        <HBox>
+                                        <HBox alignment="CENTER">
                                             <children>
                                                 <Button mnemonicParsing="false" onAction="#onLinkClicked" text="Link">
                                                     <HBox.margin>
@@ -144,6 +144,46 @@
                                                 </Button>
                                                 <ComboBox fx:id="universeEditorFactionComboBox"
                                                           promptText="Select a faction"/>
+                                                <Label text="Aeon:" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="20.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label fx:id="aeonPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="5.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label text="Cybran:" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="20.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label fx:id="cybranPlanetCountLabel" text="00000" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="5.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label text="UEF:" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="20.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label fx:id="uefPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="5.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label text="Seraphim:" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="20.0"/>
+                                                    </padding>
+                                                </Label>
+                                                <Label fx:id="seraphimPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
+                                                    <padding>
+                                                        <Insets left="5.0"/>
+                                                    </padding>
+                                                </Label>
                                             </children>
                                             <opaqueInsets>
                                                 <Insets/>

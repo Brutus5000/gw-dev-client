@@ -2,17 +2,19 @@ package com.faforever.gw.model.entitity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import javafx.scene.paint.Color;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @AllArgsConstructor
 public enum Faction {
-    AEON("aeon"),
-    CYBRAN("cybran"),
-    UEF("uef"),
-    SERAPHIM("seraphim");
+    AEON("aeon", Color.SEAGREEN),
+    CYBRAN("cybran", Color.MAROON),
+    UEF("uef", Color.MEDIUMBLUE),
+    SERAPHIM("seraphim", Color.GOLD);
 
     private static final Map<String, Faction> fromName;
 
@@ -29,6 +31,8 @@ public enum Faction {
     }
 
     private final String name;
+    @Getter
+    private final Color color;
 
     @JsonValue
     public String getName() {

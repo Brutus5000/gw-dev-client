@@ -1,5 +1,6 @@
 package com.faforever.gw.ui.universe;
 
+import com.faforever.gw.model.entitity.Faction;
 import com.faforever.gw.model.entitity.SolarSystem;
 import com.faforever.gw.ui.Controller;
 import javafx.beans.binding.DoubleBinding;
@@ -28,9 +29,9 @@ public class SolarSystemController implements Controller<Pane> {
     private final static double UNIVERSE_WIDTH = 100;
     private final static double UNIVERSE_HEIGHT = 100;
 
-    private final static Color DEFAULT_COLOR = Color.BLACK;
-    private final static Color HOVER_COLOR = Color.RED;
-    private final static Color SELECTED_COLOR = Color.GREEN;
+    private final static Color DEFAULT_COLOR = Color.GREY;
+    private final static Color HOVER_COLOR = Color.LIME;
+    private final static Color SELECTED_COLOR = Color.PURPLE;
 
     @Getter
     private List<Line> connectionLines = new ArrayList<>();
@@ -57,8 +58,7 @@ public class SolarSystemController implements Controller<Pane> {
         this.solarSystem = solarSystem;
 
         planetCountLabel.setText(Integer.toString(solarSystem.getPlanets().size()));
-
-        planetCircle.setFill(DEFAULT_COLOR);
+        planetCircle.setStrokeWidth(3.0);
 
         planetCircle.setOnMouseEntered(event -> {
             isHovered = true;
@@ -102,6 +102,8 @@ public class SolarSystemController implements Controller<Pane> {
         solarSystemRoot.translateYProperty().bind(sideLengthProperty.multiply(scaleY).multiply(solarSystem.getY()).add(offsetY));
         solarSystemRoot.scaleXProperty().bind(scaleX);
         solarSystemRoot.scaleYProperty().bind(scaleY);
+
+        invalidate();
     }
 
     @Override
@@ -111,12 +113,17 @@ public class SolarSystemController implements Controller<Pane> {
 
 
     private void invalidate() {
+        Faction uniqueFaction = solarSystem.getUniqueOwner();
+
+        Color backColor = uniqueFaction == null ? DEFAULT_COLOR : uniqueFaction.getColor();
+        planetCircle.setFill(backColor);
+
         if (isSelected) {
-            planetCircle.setFill(SELECTED_COLOR);
+            planetCircle.setStroke(SELECTED_COLOR);
         } else if (isHovered) {
-            planetCircle.setFill(HOVER_COLOR);
+            planetCircle.setStroke(HOVER_COLOR);
         } else {
-            planetCircle.setFill(DEFAULT_COLOR);
+            planetCircle.setStroke(DEFAULT_COLOR);
         }
     }
 }

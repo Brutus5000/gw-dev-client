@@ -74,6 +74,16 @@ public class MainController {
     Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
     @FXML
     private ComboBox<Faction> universeEditorFactionComboBox;
+
+    @FXML
+    private Label aeonPlanetCountLabel;
+    @FXML
+    private Label cybranPlanetCountLabel;
+    @FXML
+    private Label uefPlanetCountLabel;
+    @FXML
+    private Label seraphimPlanetCountLabel;
+
     private List<SolarSystem> selectedSolarSystems = new ArrayList<>();
     private List<ConnectionLine> connectionLines = new ArrayList<>();
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
@@ -130,6 +140,23 @@ public class MainController {
                     controllerMap.put(solarSystem, solarSystemController);
                 }
         );
+
+        aeonPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.AEON)
+                        .count()));
+        cybranPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.CYBRAN)
+                        .count()));
+        uefPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.UEF)
+                        .count()));
+        seraphimPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.SERAPHIM)
+                        .count()));
 
         for (SolarSystem from : universeState.getSolarSystems()) {
             for (SolarSystem to : from.getConnectedSystems()) {
@@ -233,7 +260,8 @@ public class MainController {
         }
 
         public String toString() {
-            return String.format("%s %s", planet.getCurrentOwner().getName(), planet.getId());
+            String name = planet.getCurrentOwner() == null ? "unassigned" : planet.getCurrentOwner().getName();
+            return String.format("%s %s", name, planet.getId());
         }
     }
 

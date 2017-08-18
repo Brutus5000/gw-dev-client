@@ -1,5 +1,6 @@
 package com.faforever.gw.model.entitity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
@@ -34,5 +35,24 @@ public class SolarSystem implements Serializable {
 
     public String toString() {
         return MessageFormat.format("SolarSystem @ ({0},{1},{2} [ID = {4}]", x, y, z, id);
+    }
+
+    @JsonIgnore
+    public Faction getUniqueOwner() {
+        Faction uniqueFaction = null;
+
+        boolean first = true;
+
+        for (Planet p : planets) {
+            if (first) {
+                first = false;
+                uniqueFaction = p.getCurrentOwner();
+            } else {
+                if (uniqueFaction != p.getCurrentOwner())
+                    return null;
+            }
+        }
+
+        return uniqueFaction;
     }
 }
