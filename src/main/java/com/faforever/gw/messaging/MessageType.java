@@ -40,10 +40,12 @@ public enum MessageType {
 
     @Getter(value = AccessLevel.NONE)
     private static final Map<String, Class> messageTypeByAction = new HashMap<>();
+    private static final Map<Class, MessageType> messageTypeByClass = new HashMap<>();
 
     static {
         for (MessageType messageType : values()) {
             messageTypeByAction.put(messageType.getName(), messageType.getMessageClass());
+            messageTypeByClass.put(messageType.getMessageClass(), messageType);
         }
     }
 
@@ -53,6 +55,10 @@ public enum MessageType {
 
     public static Class getByAction(String action) {
         return messageTypeByAction.getOrDefault(action, null);
+    }
+
+    public static MessageType getByClass(Class clazz) {
+        return messageTypeByClass.getOrDefault(clazz, null);
     }
 
     public enum Audience {

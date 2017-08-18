@@ -1,6 +1,5 @@
 package com.faforever.gw.messaging.outgoing;
 
-import com.faforever.gw.messaging.MessageType;
 import lombok.Value;
 
 import java.util.UUID;
@@ -13,10 +12,5 @@ public class JoinAssaultMessage implements ClientMessage {
     public JoinAssaultMessage(UUID battleId) {
         this.requestId = UUID.randomUUID();
         this.battleId = battleId;
-    }
-
-    @Override
-    public MessageType getAction() {
-        return MessageType.ACTION_JOIN_ASSAULT;
     }
 }

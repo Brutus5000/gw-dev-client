@@ -82,9 +82,10 @@ public class MessagingService {
 
 
     private TextMessage box(ClientMessage message) throws JsonProcessingException {
+        MessageType messageType = MessageType.getByClass(message.getClass());
         return new TextMessage(
                 jsonObjectMapper.writeValueAsString(
-                        new WebSocketEnvelope(message.getAction().getName(), jsonObjectMapper.writeValueAsString(message))
+                        new WebSocketEnvelope(messageType.getName(), jsonObjectMapper.writeValueAsString(message))
                 )
         );
     }
