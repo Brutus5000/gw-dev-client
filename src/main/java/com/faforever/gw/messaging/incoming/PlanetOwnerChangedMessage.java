@@ -8,6 +8,6 @@ import java.util.UUID;
 
 @Data
 public class PlanetOwnerChangedMessage implements GwMessage {
-    private UUID solarSystem;
+    private UUID planetId;
     private Faction newOwner;
 }

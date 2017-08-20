@@ -31,7 +31,7 @@ public class SolarSystemController implements Controller<Pane> {
 
     private final static Color DEFAULT_COLOR = Color.GREY;
     private final static Color HOVER_COLOR = Color.LIME;
-    private final static Color SELECTED_COLOR = Color.PURPLE;
+    private final static Color SELECTED_COLOR = Color.ORANGE;
 
     @Getter
     private List<Line> connectionLines = new ArrayList<>();
@@ -121,7 +121,7 @@ public class SolarSystemController implements Controller<Pane> {
     }
 
 
-    private void invalidate() {
+    public void invalidate() {
         Faction uniqueFaction = solarSystem.getUniqueOwner();
 
         Color backColor = uniqueFaction == null ? DEFAULT_COLOR : uniqueFaction.getColor();

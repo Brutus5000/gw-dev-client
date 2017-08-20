@@ -69,7 +69,6 @@ public class MainController {
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
     @FXML
     private Pane universeEditorPane;
-    Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
     @FXML
     private ComboBox<Faction> universeEditorFactionComboBox;
 
@@ -83,6 +82,7 @@ public class MainController {
     private Label seraphimPlanetCountLabel;
 
     private List<SolarSystem> selectedSolarSystems = new ArrayList<>();
+    private Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
     private List<ConnectionLine> connectionLines = new ArrayList<>();
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
@@ -557,7 +557,8 @@ public class MainController {
     @EventListener
     private void onPlanetOwnerChanged(PlanetOwnerChangedEvent event) {
         Platform.runLater(() -> {
-            universeEditorPane.requestLayout();
+            SolarSystemController solarSystemController = controllerMap.get(event.getPlanet().getSolarSystem());
+            solarSystemController.invalidate();
         });
     }
 
@@ -565,11 +566,6 @@ public class MainController {
     public void onLinkClicked() {
         log.debug("Link clicked");
         log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
-
-        if (selectedSolarSystems.size() != 2) {
-            onErrorEvent(new ErrorEvent("ui", "Exactly 2 solar systems need to be selected for linking"));
-            return;
-        }
 
         List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
 
@@ -594,10 +590,6 @@ public class MainController {
         log.debug("Unlink clicked");
         log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
 
-        if (selectedSolarSystems.size() != 2) {
-            onErrorEvent(new ErrorEvent("ui", "Exactly 2 solar systems need to be selected for unlinking"));
-            return;
-        }
         List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
 
         for (SolarSystem from : selectedSolarSystems) {

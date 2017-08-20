@@ -6,3 +6,4 @@ gw:
 logging:
   level:
     com.faforever.gw: debug
+    org.springframework.web.socket: info

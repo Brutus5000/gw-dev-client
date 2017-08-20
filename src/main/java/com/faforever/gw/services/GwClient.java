@@ -220,11 +220,7 @@ public class GwClient {
     }
 
     public void initiateAssault(UUID planetId) throws IOException {
-        messagingService.send(new InitiateAssaultMessage(planetId))
-                .thenAccept(aVoid -> {
-                    clientState = ClientState.IN_ASSAULT;
-                    applicationEventPublisher.publishEvent(clientState);
-                });
+        messagingService.send(new InitiateAssaultMessage(planetId));
     }
 
     public void joinAssault(String battleId) throws IOException {
@@ -232,11 +228,7 @@ public class GwClient {
     }
 
     public void joinAssault(UUID battleId) throws IOException {
-        messagingService.send(new JoinAssaultMessage(battleId))
-                .thenAccept(aVoid -> {
-                    clientState = ClientState.IN_ASSAULT;
-                    applicationEventPublisher.publishEvent(clientState);
-                });
+        messagingService.send(new JoinAssaultMessage(battleId));
     }
 
     public void leaveAssault() throws IOException {
@@ -322,7 +314,7 @@ public class GwClient {
     }
 
     @EventListener
-    private void onSetPlanetFaction(SetPlanetFactionRequestMessage message) {
+    private void onSetPlanetFaction(PlanetOwnerChangedMessage message) {
         Planet planet = universeState.getPlanet(message.getPlanetId());
         Faction newOwner = message.getNewOwner();
 
