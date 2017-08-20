@@ -91,9 +91,11 @@ public class MessagingService {
     }
 
     public CompletableFuture<Void> send(ClientMessage message) throws IOException {
+        log.trace("Enqueuing message: {}", message);
         CompletableFuture<Void> future = new CompletableFuture<>();
         future.runAsync(() -> {
                     try {
+                        log.trace("Sending message: {}", message);
                         currentSession.sendMessage(box(message));
                     } catch (JsonProcessingException e) {
                         log.error("Error on converting message to string", e);
