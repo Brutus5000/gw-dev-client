@@ -4,7 +4,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <HBox xmlns:fx="http://javafx.com/fxml/1" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-      minWidth="1500.0" xmlns="http://javafx.com/javafx/8.0.111" fx:controller="com.faforever.gw.ui.MainController">
+      minHeight="800.0" minWidth="1600.0" xmlns="http://javafx.com/javafx/8.0.111"
+      fx:controller="com.faforever.gw.ui.MainController">
     <children>
         <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="ALWAYS">
             <children>
@@ -129,6 +130,12 @@
                                               maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
                                         <HBox alignment="CENTER">
                                             <children>
+                                                <Button mnemonicParsing="false" onAction="#onDeselectAllClicked"
+                                                        text="Deselect all">
+                                                    <HBox.margin>
+                                                        <Insets right="10.0"/>
+                                                    </HBox.margin>
+                                                </Button>
                                                 <Button mnemonicParsing="false" onAction="#onLinkClicked" text="Link">
                                                     <HBox.margin>
                                                         <Insets right="10.0"/>

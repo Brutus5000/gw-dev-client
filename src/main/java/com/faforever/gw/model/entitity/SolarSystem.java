@@ -34,7 +34,7 @@ public class SolarSystem implements Serializable {
     }
 
     public String toString() {
-        return MessageFormat.format("SolarSystem @ ({0},{1},{2} [ID = {4}]", x, y, z, id);
+        return MessageFormat.format("SolarSystem @ ({0},{1},{2}) [ID = {3}]", x, y, z, id);
     }
 
     @JsonIgnore

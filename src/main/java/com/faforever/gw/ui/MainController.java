@@ -7,9 +7,7 @@ import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Faction;
 import com.faforever.gw.model.entitity.Planet;
 import com.faforever.gw.model.entitity.SolarSystem;
-import com.faforever.gw.model.event.BattleChangedEvent;
-import com.faforever.gw.model.event.ErrorEvent;
-import com.faforever.gw.model.event.UniverseLoadedEvent;
+import com.faforever.gw.model.event.*;
 import com.faforever.gw.services.GwClient;
 import com.faforever.gw.ui.universe.ConnectionLine;
 import com.faforever.gw.ui.universe.SolarSystemController;
@@ -292,6 +290,7 @@ public class MainController {
                     initiateAssaultComboBox.getItems().clear();
                     joinAssaultComboBox.getItems().clear();
                     battleData.clear();
+                    universeEditorPane.getChildren().clear();
                     break;
                 case CONNECTED:
                     characterTextField.setText("");
@@ -522,61 +521,119 @@ public class MainController {
         }
     }
 
+    @EventListener
+    private void onSolarSystemsLinked(SolarSystemsLinkedEvent event) {
+        Platform.runLater(() -> {
+            SolarSystem from = event.getFrom();
+            SolarSystem to = event.getTo();
+
+            ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+            connectionLines.add(connectionLine);
+            universeEditorPane.getChildren().add(connectionLine);
+            connectionLine.toBack();
+            log.info("Solar systems link from {} to {} added to scene graph", from, to);
+        });
+    }
+
+    @EventListener
+    private void onSolarSystemsUnlinked(SolarSystemsUnlinkedEvent event) {
+        Platform.runLater(() -> {
+            SolarSystem from = event.getFrom();
+            SolarSystem to = event.getTo();
+
+            connectionLines.stream()
+                    .filter(connectionLine -> connectionLine.connects(from, to))
+                    .collect(Collectors.toList())
+                    .forEach(connectionLine -> {
+                        connectionLine.unlink();
+                        universeEditorPane.getChildren().remove(connectionLine);
+                        connectionLines.remove(connectionLine);
+                    });
+
+            log.info("Solar systems link from {} to {} removed from scene graph", from, to);
+        });
+    }
+
+    @EventListener
+    private void onPlanetOwnerChanged(PlanetOwnerChangedEvent event) {
+        Platform.runLater(() -> {
+            universeEditorPane.requestLayout();
+        });
+    }
+
+    @SneakyThrows
     public void onLinkClicked() {
         log.debug("Link clicked");
         log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
 
+        if (selectedSolarSystems.size() != 2) {
+            onErrorEvent(new ErrorEvent("ui", "Exactly 2 solar systems need to be selected for linking"));
+            return;
+        }
+
+        List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
+
         for (SolarSystem from : selectedSolarSystems) {
             for (SolarSystem to : selectedSolarSystems) {
                 if (from == to)
                     continue;
 
-                if (from.getConnectedSystems().contains(to) || to.getConnectedSystems().contains(from))
+                if (!remaining.contains(to))
                     continue;
 
-                from.getConnectedSystems().add(to);
-                to.getConnectedSystems().add(from);
-
-                ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
-                connectionLines.add(connectionLine);
-                universeEditorPane.getChildren().add(connectionLine);
-                connectionLine.toBack();
+                log.debug("Requesting solar system link from {} to {}", from, to);
+                gwClient.adminLinkSolarSystems(from, to);
             }
+
+            remaining.remove(from);
         }
     }
 
+    @SneakyThrows
     public void onUnlinkClicked() {
         log.debug("Unlink clicked");
         log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
 
+        if (selectedSolarSystems.size() != 2) {
+            onErrorEvent(new ErrorEvent("ui", "Exactly 2 solar systems need to be selected for unlinking"));
+            return;
+        }
+        List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
+
         for (SolarSystem from : selectedSolarSystems) {
             for (SolarSystem to : selectedSolarSystems) {
                 if (from == to)
                     continue;
 
-                if (!from.getConnectedSystems().contains(to))
+                if (!remaining.contains(to))
                     continue;
 
-                from.getConnectedSystems().remove(to);
-                to.getConnectedSystems().remove(from);
-
-                connectionLines.stream()
-                        .filter(connectionLine -> connectionLine.connects(from, to))
-                        .collect(Collectors.toList())
-                        .forEach(connectionLine -> {
-                            connectionLine.unlink();
-                            universeEditorPane.getChildren().remove(connectionLine);
-                            connectionLines.remove(connectionLine);
-                        });
-
-                ConnectionLine line = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+                log.debug("Requesting removal solar system link from {} to {}", from, to);
+                gwClient.adminUnlinkSolarSystems(from, to);
             }
+
+            remaining.remove(from);
         }
     }
 
+    public void onDeselectAllClicked() {
+        log.debug("Deselect all clicked");
+        new ArrayList<>(selectedSolarSystems)
+                .forEach(solarSystem -> controllerMap.get(solarSystem).setSelected(false));
+    }
+
     public void onSetFactionClicked() {
-        log.debug("SetFaction clicked for faction {}", universeEditorFactionComboBox.getSelectionModel().getSelectedItem());
+        Faction selectedFaction = universeEditorFactionComboBox.getSelectionModel().getSelectedItem();
+        log.debug("SetFaction clicked for faction {}", selectedFaction);
         log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        if (selectedFaction == null) {
+            log.error("No faction selected");
+            onErrorEvent(new ErrorEvent("ui", "Please select a faction to set"));
+            return;
+        }
+        selectedSolarSystems.stream()
+                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
+                .forEach(planet -> gwClient.setFaction(planet, selectedFaction));
     }
 }
-

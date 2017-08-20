@@ -9,6 +9,12 @@ import java.util.UUID;
 @Value
 @AllArgsConstructor
 public class SetPlanetFactionRequestMessage implements ClientMessage {
+    public SetPlanetFactionRequestMessage(UUID planetId, Faction newOwner) {
+        this.requestId = UUID.randomUUID();
+        this.planetId = planetId;
+        this.newOwner = newOwner;
+    }
+
     private UUID requestId;
     private UUID planetId;
     private Faction newOwner;

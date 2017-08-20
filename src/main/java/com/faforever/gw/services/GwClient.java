@@ -2,18 +2,12 @@ package com.faforever.gw.services;
 
 import com.faforever.gw.messaging.MessagingService;
 import com.faforever.gw.messaging.incoming.*;
-import com.faforever.gw.messaging.outgoing.ClientMessage;
-import com.faforever.gw.messaging.outgoing.InitiateAssaultMessage;
-import com.faforever.gw.messaging.outgoing.JoinAssaultMessage;
-import com.faforever.gw.messaging.outgoing.LeaveAssaultMessage;
+import com.faforever.gw.messaging.outgoing.*;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.*;
-import com.faforever.gw.model.event.BattleChangedEvent;
-import com.faforever.gw.model.event.ErrorEvent;
-import com.faforever.gw.model.event.PlanetChangedEvent;
-import com.faforever.gw.model.event.UniverseLoadedEvent;
+import com.faforever.gw.model.event.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -210,7 +204,7 @@ public class GwClient {
         planet.setCurrentOwner(winningFaction);
 
         applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
-        applicationEventPublisher.publishEvent(new PlanetChangedEvent(planet));
+        applicationEventPublisher.publishEvent(new PlanetOwnerChangedEvent(planet, winningFaction));
     }
 
     public void connect(String token) {
@@ -303,6 +297,52 @@ public class GwClient {
 
         // it's your factions planet - no action
         return PlanetAction.NONE;
+    }
+
+    @EventListener
+    private void onSolarSystemsLinked(SolarSystemsLinkedMessage message) {
+        SolarSystem from = universeState.getSolarSystem(message.getSolarSystemFrom());
+        SolarSystem to = universeState.getSolarSystem(message.getSolarSystemTo());
+
+        log.debug("Solar systems link established between {} to {}", from, to);
+        from.getConnectedSystems().add(to);
+        to.getConnectedSystems().add(from);
+        applicationEventPublisher.publishEvent(new SolarSystemsLinkedEvent(from, to));
+    }
+
+    @EventListener
+    private void onSolarSystemsUnlinked(SolarSystemsUnlinkedMessage message) {
+        SolarSystem from = universeState.getSolarSystem(message.getSolarSystemFrom());
+        SolarSystem to = universeState.getSolarSystem(message.getSolarSystemTo());
+
+        log.debug("Solar systems link removed between {} to {}", from, to);
+        from.getConnectedSystems().remove(to);
+        to.getConnectedSystems().remove(from);
+        applicationEventPublisher.publishEvent(new SolarSystemsUnlinkedEvent(from, to));
+    }
+
+    @EventListener
+    private void onSetPlanetFaction(SetPlanetFactionRequestMessage message) {
+        Planet planet = universeState.getPlanet(message.getPlanetId());
+        Faction newOwner = message.getNewOwner();
+
+        log.debug("Changing owner for planet {} to {}", planet, newOwner);
+        planet.setCurrentOwner(newOwner);
+        applicationEventPublisher.publishEvent(new PlanetOwnerChangedEvent(planet, newOwner));
+    }
+
+    public void adminLinkSolarSystems(SolarSystem from, SolarSystem to) throws IOException {
+        messagingService.send(new LinkSolarSystemsRequestMessage(UUID.fromString(from.getId()), UUID.fromString(to.getId())));
+    }
+
+    public void adminUnlinkSolarSystems(SolarSystem from, SolarSystem to) throws IOException {
+        messagingService.send(new UnlinkSolarSystemsRequestMessage(UUID.fromString(from.getId()), UUID.fromString(to.getId())));
+    }
+
+    @SneakyThrows
+    public void setFaction(Planet planet, Faction selectedFaction) {
+        log.debug("Requesting change of planet {} -> set owner to {}", planet, selectedFaction);
+        messagingService.send(new SetPlanetFactionRequestMessage(UUID.fromString(planet.getId()), selectedFaction));
     }
 }
 

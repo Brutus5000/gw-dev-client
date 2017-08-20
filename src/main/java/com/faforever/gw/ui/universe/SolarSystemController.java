@@ -47,6 +47,20 @@ public class SolarSystemController implements Controller<Pane> {
     private Circle planetCircle;
 
     private boolean isHovered = false;
+
+    public void setSelected(boolean selected) {
+        boolean changed = isSelected != selected;
+
+        isSelected = selected;
+
+        if (changed) {
+            if (onSelectionChangedListener != null)
+                onSelectionChangedListener.accept(isSelected);
+
+            invalidate();
+        }
+    }
+
     private boolean isSelected = false;
     private Consumer<Boolean> onSelectionChangedListener;
 
@@ -71,12 +85,7 @@ public class SolarSystemController implements Controller<Pane> {
         });
 
         planetCircle.setOnMouseClicked(event -> {
-            isSelected = !isSelected;
-
-            if (onSelectionChangedListener != null)
-                onSelectionChangedListener.accept(isSelected);
-
-            invalidate();
+            setSelected(!isSelected);
         });
 
 
