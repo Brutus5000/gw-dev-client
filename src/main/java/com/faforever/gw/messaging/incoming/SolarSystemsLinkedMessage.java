@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class BattleUpdateWaitingProgressMessage implements GwMessage {
-    private UUID battleId;
-    private Double waitingProgress;
+public class SolarSystemsLinkedMessage implements GwMessage {
+    private UUID solarSystemFrom;
+    private UUID solarSystemTo;
 }

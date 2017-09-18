@@ -16,6 +16,7 @@ import java.util.Objects;
 public class Planet implements Serializable {
     @Id
     private String id;
+    private String name;
     @Relationship("solarSystem")
     private SolarSystem solarSystem;
     private List<Battle> battles = new ArrayList<>();

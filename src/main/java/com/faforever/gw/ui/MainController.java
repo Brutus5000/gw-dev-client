@@ -6,11 +6,12 @@ import com.faforever.gw.model.UniverseState;
 import com.faforever.gw.model.entitity.Battle;
 import com.faforever.gw.model.entitity.Faction;
 import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.event.BattleChangedEvent;
-import com.faforever.gw.model.event.CharacterNameProposalEvent;
-import com.faforever.gw.model.event.ErrorEvent;
-import com.faforever.gw.model.event.UniverseLoadedEvent;
+import com.faforever.gw.model.entitity.SolarSystem;
+import com.faforever.gw.model.event.*;
 import com.faforever.gw.services.GwClient;
+import com.faforever.gw.ui.universe.ConnectionLine;
+import com.faforever.gw.ui.universe.SolarSystemController;
+import com.faforever.gw.ui.universe.UniverseItemAdapter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -19,6 +20,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.scene.layout.Pane;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -28,13 +30,13 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class MainController {
+    private final UiService uiService;
     private GwClient gwClient;
 
     @FXML
@@ -75,8 +77,23 @@ public class MainController {
     private ComboBox selectNameProposalComboBox;
     @FXML
     private Button selectNameProposalButton;
+    @FXML
+    private Pane universeEditorPane;
+    @FXML
+    private ComboBox<Faction> universeEditorFactionComboBox;
 
+    @FXML
+    private Label aeonPlanetCountLabel;
+    @FXML
+    private Label cybranPlanetCountLabel;
+    @FXML
+    private Label uefPlanetCountLabel;
+    @FXML
+    private Label seraphimPlanetCountLabel;
 
+    private List<SolarSystem> selectedSolarSystems = new ArrayList<>();
+    private Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
+    private List<ConnectionLine> connectionLines = new ArrayList<>();
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
 
     private final UniverseState universeState;
@@ -84,7 +101,8 @@ public class MainController {
     private Map<String, String> userAccessTokenMap = new TreeMap<>();
 
     @Inject
-    public MainController(GwClient gwClient, UniverseState universeState) {
+    public MainController(UiService uiService, GwClient gwClient, UniverseState universeState) {
+        this.uiService = uiService;
         this.gwClient = gwClient;
         this.universeState = universeState;
     }
@@ -106,6 +124,7 @@ public class MainController {
                 });
 
         TreeItem root = universeTreeTableView.getRoot();
+
         universeState.getSolarSystems().forEach(
                 solarSystem -> {
                     TreeItem<UniverseItemAdapter> solarSystemTreeItem = new TreeItem<>(new UniverseItemAdapter(solarSystem));
@@ -113,8 +132,51 @@ public class MainController {
                     solarSystem.getPlanets().forEach(
                             planet -> solarSystemTreeItem.getChildren().add(new TreeItem<>(new UniverseItemAdapter(planet)))
                     );
+
+
+                    SolarSystemController solarSystemController = uiService.loadFxml("/solarSystem.fxml");
+                    universeEditorPane.getChildren().add(solarSystemController.getRoot());
+                    solarSystemController.setSolarSystem(solarSystem);
+                    solarSystemController.setSelectionChangedListener(isSelected -> {
+                        if (isSelected) {
+                            selectedSolarSystems.add(solarSystem);
+                        } else {
+                            selectedSolarSystems.remove(solarSystem);
+                        }
+                    });
+
+                    controllerMap.put(solarSystem, solarSystemController);
                 }
         );
+
+        aeonPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.AEON)
+                        .count()));
+        cybranPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.CYBRAN)
+                        .count()));
+        uefPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.UEF)
+                        .count()));
+        seraphimPlanetCountLabel.setText(Long.toString(
+                universeState.getPlanets().stream()
+                        .filter(planet -> planet.getCurrentOwner() == Faction.SERAPHIM)
+                        .count()));
+
+        for (SolarSystem from : universeState.getSolarSystems()) {
+            for (SolarSystem to : from.getConnectedSystems()) {
+                if (connectionLines.stream().filter(connectionLine -> connectionLine.connects(from, to)).count() > 0)
+                    continue;
+
+                ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+                universeEditorPane.getChildren().add(connectionLine);
+                connectionLine.toBack();
+                connectionLines.add(connectionLine);
+            }
+        }
     }
 
     @FXML
@@ -122,6 +184,8 @@ public class MainController {
         for (Faction f : Faction.values()) {
             requestCharacterFactionComboBox.getItems().add(f);
         }
+
+        universeEditorFactionComboBox.getItems().addAll(Faction.values());
 
         userAccessTokenMap.put("-1- UEF Alpha", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMSwgInVzZXJfbmFtZSI6ICJVRUYgQWxwaGEiLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.qlA-HIEU9zQ7OA_eAqfYAG5MZmhe7TBqV9zVnJgV2wY");
         userAccessTokenMap.put("-2- UEF Bravo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMiwgInVzZXJfbmFtZSI6ICJVRUYgQnJhdm8iLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.ZHwO6jvcHPd0fhBFSaJTQpt-S8Zmwa6unPW0qHkzLKw");
@@ -209,7 +273,8 @@ public class MainController {
         }
 
         public String toString() {
-            return String.format("%s %s", planet.getCurrentOwner().getName(), planet.getId());
+            String name = planet.getCurrentOwner() == null ? "unassigned" : planet.getCurrentOwner().getName();
+            return String.format("%s %s", name, planet.getId());
         }
     }
 
@@ -240,6 +305,7 @@ public class MainController {
                     initiateAssaultComboBox.getItems().clear();
                     joinAssaultComboBox.getItems().clear();
                     battleData.clear();
+                    universeEditorPane.getChildren().clear();
                     break;
                 case CONNECTED:
                     characterTextField.setText("");
@@ -264,7 +330,8 @@ public class MainController {
 
     @EventListener
     public void onUniverseLoaded(UniverseLoadedEvent e) {
-        refreshData();
+        Platform.runLater(this::refreshData);
+        ;
     }
 
     @SneakyThrows
@@ -475,6 +542,20 @@ public class MainController {
     }
 
     @EventListener
+    private void onSolarSystemsLinked(SolarSystemsLinkedEvent event) {
+        Platform.runLater(() -> {
+            SolarSystem from = event.getFrom();
+            SolarSystem to = event.getTo();
+
+            ConnectionLine connectionLine = new ConnectionLine(controllerMap.get(from), controllerMap.get(to));
+            connectionLines.add(connectionLine);
+            universeEditorPane.getChildren().add(connectionLine);
+            connectionLine.toBack();
+            log.info("Solar systems link from {} to {} added to scene graph", from, to);
+        });
+    }
+
+    @EventListener
     public void onCharacterNameProposal(CharacterNameProposalEvent event) {
         Platform.runLater(() -> {
             selectNameRequestIdTextField.setText(event.getRequestId().toString());
@@ -493,5 +574,98 @@ public class MainController {
             log.error("Something went wrong on selecting character name", e);
         }
     }
-}
 
+    @EventListener
+    private void onSolarSystemsUnlinked(SolarSystemsUnlinkedEvent event) {
+        Platform.runLater(() -> {
+            SolarSystem from = event.getFrom();
+            SolarSystem to = event.getTo();
+
+            connectionLines.stream()
+                    .filter(connectionLine -> connectionLine.connects(from, to))
+                    .collect(Collectors.toList())
+                    .forEach(connectionLine -> {
+                        connectionLine.unlink();
+                        universeEditorPane.getChildren().remove(connectionLine);
+                        connectionLines.remove(connectionLine);
+                    });
+
+            log.info("Solar systems link from {} to {} removed from scene graph", from, to);
+        });
+    }
+
+    @EventListener
+    private void onPlanetOwnerChanged(PlanetOwnerChangedEvent event) {
+        Platform.runLater(() -> {
+            SolarSystemController solarSystemController = controllerMap.get(event.getPlanet().getSolarSystem());
+            solarSystemController.invalidate();
+        });
+    }
+
+    @SneakyThrows
+    public void onLinkClicked() {
+        log.debug("Link clicked");
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
+
+        for (SolarSystem from : selectedSolarSystems) {
+            for (SolarSystem to : selectedSolarSystems) {
+                if (from == to)
+                    continue;
+
+                if (!remaining.contains(to))
+                    continue;
+
+                log.debug("Requesting solar system link from {} to {}", from, to);
+                gwClient.adminLinkSolarSystems(from, to);
+            }
+
+            remaining.remove(from);
+        }
+    }
+
+    @SneakyThrows
+    public void onUnlinkClicked() {
+        log.debug("Unlink clicked");
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        List<SolarSystem> remaining = new ArrayList<>(selectedSolarSystems);
+
+        for (SolarSystem from : selectedSolarSystems) {
+            for (SolarSystem to : selectedSolarSystems) {
+                if (from == to)
+                    continue;
+
+                if (!remaining.contains(to))
+                    continue;
+
+                log.debug("Requesting removal solar system link from {} to {}", from, to);
+                gwClient.adminUnlinkSolarSystems(from, to);
+            }
+
+            remaining.remove(from);
+        }
+    }
+
+    public void onDeselectAllClicked() {
+        log.debug("Deselect all clicked");
+        new ArrayList<>(selectedSolarSystems)
+                .forEach(solarSystem -> controllerMap.get(solarSystem).setSelected(false));
+    }
+
+    public void onSetFactionClicked() {
+        Faction selectedFaction = universeEditorFactionComboBox.getSelectionModel().getSelectedItem();
+        log.debug("SetFaction clicked for faction {}", selectedFaction);
+        log.debug("-> selected SolarSystems: {}", selectedSolarSystems);
+
+        if (selectedFaction == null) {
+            log.error("No faction selected");
+            onErrorEvent(new ErrorEvent("ui", "Please select a faction to set"));
+            return;
+        }
+        selectedSolarSystems.stream()
+                .flatMap(solarSystem -> solarSystem.getPlanets().stream())
+                .forEach(planet -> gwClient.setFaction(planet, selectedFaction));
+    }
+}

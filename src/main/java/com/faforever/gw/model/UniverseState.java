@@ -41,6 +41,10 @@ public class UniverseState {
         return solarSystemDict.values();
     }
 
+    public SolarSystem getSolarSystem(UUID id) {
+        return getSolarSystem(id.toString());
+    }
+
     public SolarSystem getSolarSystem(String id) {
         return solarSystemDict.get(id);
     }

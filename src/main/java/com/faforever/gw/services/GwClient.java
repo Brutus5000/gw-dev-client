@@ -212,7 +212,7 @@ public class GwClient {
         planet.setCurrentOwner(winningFaction);
 
         applicationEventPublisher.publishEvent(new BattleChangedEvent(battle, false));
-        applicationEventPublisher.publishEvent(new PlanetChangedEvent(planet));
+        applicationEventPublisher.publishEvent(new PlanetOwnerChangedEvent(planet, winningFaction));
     }
 
     public void connect(String token) {
@@ -236,11 +236,7 @@ public class GwClient {
     }
 
     public void initiateAssault(UUID planetId) throws IOException {
-        messagingService.send(new InitiateAssaultMessage(planetId))
-                .thenAccept(aVoid -> {
-                    clientState = ClientState.IN_ASSAULT;
-                    applicationEventPublisher.publishEvent(clientState);
-                });
+        messagingService.send(new InitiateAssaultMessage(planetId));
     }
 
     public void joinAssault(String battleId) throws IOException {
@@ -248,11 +244,7 @@ public class GwClient {
     }
 
     public void joinAssault(UUID battleId) throws IOException {
-        messagingService.send(new JoinAssaultMessage(battleId))
-                .thenAccept(aVoid -> {
-                    clientState = ClientState.IN_ASSAULT;
-                    applicationEventPublisher.publishEvent(clientState);
-                });
+        messagingService.send(new JoinAssaultMessage(battleId));
     }
 
     public void leaveAssault() throws IOException {
@@ -318,6 +310,52 @@ public class GwClient {
     @EventListener
     public void onCharacterNameProposal(CharacterNameProposalMessage message) {
         applicationEventPublisher.publishEvent(new CharacterNameProposalEvent(message.getRequestId(), message.getProposedNamesList()));
+    }
+
+    @EventListener
+    private void onSolarSystemsLinked(SolarSystemsLinkedMessage message) {
+        SolarSystem from = universeState.getSolarSystem(message.getSolarSystemFrom());
+        SolarSystem to = universeState.getSolarSystem(message.getSolarSystemTo());
+
+        log.debug("Solar systems link established between {} to {}", from, to);
+        from.getConnectedSystems().add(to);
+        to.getConnectedSystems().add(from);
+        applicationEventPublisher.publishEvent(new SolarSystemsLinkedEvent(from, to));
+    }
+
+    @EventListener
+    private void onSolarSystemsUnlinked(SolarSystemsUnlinkedMessage message) {
+        SolarSystem from = universeState.getSolarSystem(message.getSolarSystemFrom());
+        SolarSystem to = universeState.getSolarSystem(message.getSolarSystemTo());
+
+        log.debug("Solar systems link removed between {} to {}", from, to);
+        from.getConnectedSystems().remove(to);
+        to.getConnectedSystems().remove(from);
+        applicationEventPublisher.publishEvent(new SolarSystemsUnlinkedEvent(from, to));
+    }
+
+    @EventListener
+    private void onSetPlanetFaction(PlanetOwnerChangedMessage message) {
+        Planet planet = universeState.getPlanet(message.getPlanetId());
+        Faction newOwner = message.getNewOwner();
+
+        log.debug("Changing owner for planet {} to {}", planet, newOwner);
+        planet.setCurrentOwner(newOwner);
+        applicationEventPublisher.publishEvent(new PlanetOwnerChangedEvent(planet, newOwner));
+    }
+
+    public void adminLinkSolarSystems(SolarSystem from, SolarSystem to) throws IOException {
+        messagingService.send(new LinkSolarSystemsRequestMessage(UUID.fromString(from.getId()), UUID.fromString(to.getId())));
+    }
+
+    public void adminUnlinkSolarSystems(SolarSystem from, SolarSystem to) throws IOException {
+        messagingService.send(new UnlinkSolarSystemsRequestMessage(UUID.fromString(from.getId()), UUID.fromString(to.getId())));
+    }
+
+    @SneakyThrows
+    public void setFaction(Planet planet, Faction selectedFaction) {
+        log.debug("Requesting change of planet {} -> set owner to {}", planet, selectedFaction);
+        messagingService.send(new SetPlanetFactionRequestMessage(UUID.fromString(planet.getId()), selectedFaction));
     }
 }
 

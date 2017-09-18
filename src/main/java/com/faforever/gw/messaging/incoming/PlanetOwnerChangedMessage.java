@@ -7,9 +7,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class PlanetDefendedMessage implements GwMessage {
+public class PlanetOwnerChangedMessage implements GwMessage {
     private UUID planetId;
-    private UUID battleId;
-    private Faction attackingFaction;
-    private Faction defendingFaction;
+    private Faction newOwner;
 }

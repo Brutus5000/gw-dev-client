@@ -4,7 +4,6 @@ import com.faforever.gw.messaging.incoming.AckMessage;
 import com.faforever.gw.messaging.incoming.ErrorMessage;
 import com.faforever.gw.messaging.outgoing.ClientMessage;
 import com.faforever.gw.model.ClientState;
-import com.faforever.gw.model.GwException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +19,8 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,7 +32,7 @@ public class MessagingService {
     private final GwWebSocketHandler webSocketHandler;
     private final ObjectMapper jsonObjectMapper;
     private WebSocketSession currentSession;
-    private Map<UUID, CompletableFuture<Void>> pendingRequests;
+    private final List<UUID> pendingRequests;
 
     @Inject
     public MessagingService(ApplicationEventPublisher applicationEventPublisher, GwWebSocketHandler webSocketHandler, ObjectMapper jsonObjectMapper) {
@@ -41,7 +40,7 @@ public class MessagingService {
         this.webSocketHandler = webSocketHandler;
         this.jsonObjectMapper = jsonObjectMapper;
         webSocketClient = new StandardWebSocketClient();
-        pendingRequests = new HashMap<>();
+        pendingRequests = new ArrayList<>();
     }
 
     public CompletableFuture<WebSocketSession> connect(String uri) {
@@ -82,57 +81,47 @@ public class MessagingService {
 
 
     private TextMessage box(ClientMessage message) throws JsonProcessingException {
+        MessageType messageType = MessageType.getByClass(message.getClass());
         return new TextMessage(
                 jsonObjectMapper.writeValueAsString(
-                        new WebSocketEnvelope(message.getAction().getName(), jsonObjectMapper.writeValueAsString(message))
+                        new WebSocketEnvelope(messageType.getName(), jsonObjectMapper.writeValueAsString(message))
                 )
         );
     }
 
-    public CompletableFuture<Void> send(ClientMessage message) throws IOException {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        future.runAsync(() -> {
-                    try {
-                        log.debug("Send message: {}", message);
-                        currentSession.sendMessage(box(message));
-                    } catch (JsonProcessingException e) {
-                        log.error("Error on converting message to string", e);
-                        future.completeExceptionally(e);
-                    } catch (IOException e) {
-                        log.error("Sending message to server failed", e);
-                        future.completeExceptionally(e);
-                    }
-                }
-        );
-
-        pendingRequests.put(message.getRequestId(), future);
-        return future;
+    public void send(ClientMessage message) throws IOException {
+        log.trace("Sending message: {}", message);
+        synchronized (pendingRequests) {
+            pendingRequests.add(message.getRequestId());
+        }
+        currentSession.sendMessage(box(message));
     }
 
     @EventListener
     private void onAcknowledged(AckMessage message) {
-        val requestId = message.getRequestId();
-        val future = pendingRequests.remove(requestId);
-        if (future != null) {
-            log.debug("Ack success: requestId {}", requestId);
-            future.complete(null);
-        } else {
-            log.error("Ack failed: requestId {} not pending", requestId);
+        UUID requestId = message.getRequestId();
+
+        synchronized (pendingRequests) {
+            if (pendingRequests.contains(requestId)) {
+                log.debug("Ack success: requestId {}", requestId);
+                pendingRequests.remove(requestId);
+            } else {
+                log.debug("Ack success: requestId {}", requestId);
+            }
         }
     }
 
     @EventListener
     private void onError(ErrorMessage message) {
         val requestId = message.getRequestId();
-        val future = pendingRequests.remove(message.getRequestId());
-        if (future != null) {
-            log.error("Error on requestId {}: [{}] {}", requestId, message.getErrorCode(), message.getErrorMessage());
-            future.completeExceptionally(
-                    new GwException(message.getErrorCode(), message.getErrorMessage()));
-        } else {
-            log.error("Error failed: requestId {} not pending", requestId);
+
+        synchronized (pendingRequests) {
+            if (pendingRequests.contains(requestId)) {
+                log.error("Error on requestId {}: [{}] {}", requestId, message.getErrorCode(), message.getErrorMessage());
+                pendingRequests.remove(requestId);
+            } else {
+                log.error("Error failed: requestId {} not pending", requestId);
+            }
         }
     }
-
-
 }
