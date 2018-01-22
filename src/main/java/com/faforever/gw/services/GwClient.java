@@ -216,7 +216,7 @@ public class GwClient {
     }
 
     public void connect(String token) {
-        String uri = String.format("ws://%s:%s/websocket?accessToken=%s", host, port, token);
+        String uri = String.format("ws://%s:%s/websocket?access_token=%s", host, port, token);
         messagingService.connect(uri);
     }
 
