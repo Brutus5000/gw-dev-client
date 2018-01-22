@@ -18,6 +18,7 @@ import java.util.Objects;
 public class Battle implements Serializable {
     @Id
     private String id;
+    private Long fafGameId;
     @Relationship("planet")
     private Planet planet;
     @Relationship("participants")
