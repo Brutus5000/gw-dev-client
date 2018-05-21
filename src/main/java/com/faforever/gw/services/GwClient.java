@@ -357,5 +357,10 @@ public class GwClient {
         log.debug("Requesting change of planet {} -> set owner to {}", planet, selectedFaction);
         messagingService.send(new SetPlanetFactionRequestMessage(UUID.fromString(planet.getId()), selectedFaction));
     }
+
+    @SneakyThrows
+    public void sendDebug(String action) {
+        messagingService.send(new DebugMessage((action)));
+    }
 }
 

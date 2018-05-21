@@ -60,9 +60,9 @@ public class MainController {
     @FXML
     private Button joinAssaultButton;
     @FXML
-    private ComboBox leaveAssaultComboBox;
-    @FXML
     private Button leaveAssaultButton;
+    @FXML
+    private Button debugHostGameButton;
     @FXML
     private TableView<Battle> battleTableView;
     @FXML
@@ -187,12 +187,12 @@ public class MainController {
 
         universeEditorFactionComboBox.getItems().addAll(Faction.values());
 
-        userAccessTokenMap.put("-1- UEF Alpha", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMSwgInVzZXJfbmFtZSI6ICJVRUYgQWxwaGEiLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.qlA-HIEU9zQ7OA_eAqfYAG5MZmhe7TBqV9zVnJgV2wY");
-        userAccessTokenMap.put("-2- UEF Bravo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMiwgInVzZXJfbmFtZSI6ICJVRUYgQnJhdm8iLCAiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sICJleHAiOiA0MTAyNDQ0NzQwfQ.ZHwO6jvcHPd0fhBFSaJTQpt-S8Zmwa6unPW0qHkzLKw");
-        userAccessTokenMap.put("-3- Cybran Charlie", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjogMywgInVzZXJfbmFtZSI6ICJDeWJyYW4gQ2hhcmxpZSIsICJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwgImV4cCI6IDQxMDI0NDQ3NDB9.qPE-UkG8tSdH4fMzD6RWkGHSYoH24SluvsPcfN9GX4A");
+        userAccessTokenMap.put("-1- UEF Alpha", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiAxLCAidXNlcl9uYW1lIjogIlVFRiBBbHBoYSJ9.u9cylQuOx-th89cUcCbeaLvegBXHSkL3_kWxZBvXTkc");
+        userAccessTokenMap.put("-2- UEF Bravo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiAyLCAidXNlcl9uYW1lIjogIlVFRiBCcmF2byJ9.zTYD_vBUnG_u6QLwfNhz6BaIr_rBDF_jqCiAfAJcS1o");
+        userAccessTokenMap.put("-3- Cybran Charlie", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiAzLCAidXNlcl9uYW1lIjogIkN5YnJhbiBDaGFybGllIn0.ElIwdA6vYOFs8KQ3SVEMU4q_o9vGQjDK0zxeUDPeKHI");
         userAccessTokenMap.put("-4- Cybran Delta", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA0LCAidXNlcl9uYW1lIjogIkN5YnJhbiBEZWx0YSJ9.5LwaskFvNLwRvIUIfvc0s2WUHP_Q1NlaUjY4hGN0Lv4");
         userAccessTokenMap.put("-5- Aeon Echo", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA1LCAidXNlcl9uYW1lIjogIkFlb24gRWNobyJ9.Kv1en5p2bWb6zE2ag6PWp4u1WxR6F8HPZSweDG23p60");
-        userAccessTokenMap.put("-X- Unregistered User", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA5OSwgInVzZXJfbmFtZSI6ICJVbnJlZ2lzdGVyZWQgdXNlciJ9.skNv5W3lgqq_OETwAeGDrlSDaKxq-Lqt2jrIspUI9Ik");
+        userAccessTokenMap.put("-X- Unregistered User", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjo0MTAyMzU4NDAwLCAiYXV0aG9yaXRpZXMiOiBbXSwgInVzZXJfaWQiOiA2LCAidXNlcl9uYW1lIjogIlVucmVnaXN0ZXJlZCB1c2VyIn0.N1LcYHHRu_bWxC_MH2BzmADC4AMfwdmuXOQJfLt0VFQ");
 
         userAccessTokenMap.keySet().forEach(s -> userComboBox.getItems().add(s));
         userComboBox.setValue("-1- UEF Alpha");
@@ -297,6 +297,7 @@ public class MainController {
             initiateAssaultButton.setDisable(newState != ClientState.FREE_FOR_BATTLE);
             joinAssaultButton.setDisable(newState != ClientState.FREE_FOR_BATTLE);
             leaveAssaultButton.setDisable(newState != ClientState.IN_ASSAULT);
+            debugHostGameButton.setDisable(newState == ClientState.DISCONNECTED);
 
             switch (newState) {
                 case DISCONNECTED:
@@ -331,7 +332,6 @@ public class MainController {
     @EventListener
     public void onUniverseLoaded(UniverseLoadedEvent e) {
         Platform.runLater(this::refreshData);
-        ;
     }
 
     @SneakyThrows
@@ -667,5 +667,9 @@ public class MainController {
         selectedSolarSystems.stream()
                 .flatMap(solarSystem -> solarSystem.getPlanets().stream())
                 .forEach(planet -> gwClient.setFaction(planet, selectedFaction));
+    }
+
+    public void onDebugHostGame() {
+        gwClient.sendDebug("dummyHostGame");
     }
 }

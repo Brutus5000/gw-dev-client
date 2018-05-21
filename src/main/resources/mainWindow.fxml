@@ -82,6 +82,7 @@
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                             </rowConstraints>
                             <children>
                                 <Label text="InitiateAssault on Planet:"/>
@@ -102,6 +103,9 @@
                                 <Button fx:id="leaveAssaultButton" mnemonicParsing="false"
                                         onAction="#onLeaveAssaultButtonClicked" text="send" GridPane.columnIndex="2"
                                         GridPane.rowIndex="2"/>
+                                <Label text="Debug hostGame" GridPane.rowIndex="3"/>
+                                <Button fx:id="debugHostGameButton" mnemonicParsing="false" onAction="#onDebugHostGame"
+                                        text="send" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
                             </children>
                         </GridPane>
                     </content>

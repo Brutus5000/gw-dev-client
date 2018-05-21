@@ -33,6 +33,7 @@ public enum MessageType {
     ADMIN_SET_PLANET_FACTION_REQUEST("setPlanetFactionRequest", null, SetPlanetFactionRequestMessage.class),
 
     // Outgoing messaging (User actions) -->
+    DEBUG("debug", null, DebugMessage.class),
     ACTION_INITIATE_ASSAULT("initiateAssault", null, InitiateAssaultMessage.class),
     ACTION_JOIN_ASSAULT("joinAssault", null, JoinAssaultMessage.class),
     ACTION_LEAVE_ASSAULT("leaveAssault", null, LeaveAssaultMessage.class),
