@@ -25,7 +25,7 @@ public class UniverseApiAccessor {
 
     @Inject
     public UniverseApiAccessor() {
-        this.resourceConverter = new ResourceConverter(SolarSystem.class, Planet.class, Battle.class, BattleParticipant.class, GwCharacter.class);
+        this.resourceConverter = new ResourceConverter(SolarSystem.class, Planet.class, Battle.class, BattleParticipant.class, GwCharacter.class, Reinforcement.class, Unit.class, PassiveItem.class);
     }
 
     @SneakyThrows
@@ -65,5 +65,11 @@ public class UniverseApiAccessor {
         return character.get();
     }
 
+    @SneakyThrows
+    public List<Reinforcement> queryReinforcements() {
+        URL reinforcementListUrl = buildURL("reinforcement?include=unit,item");
+        JSONAPIDocument<List<Reinforcement>> reinforcementList = resourceConverter.readDocumentCollection(reinforcementListUrl.openStream(), Reinforcement.class);
 
+        return reinforcementList.get();
+    }
 }

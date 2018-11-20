@@ -95,7 +95,10 @@ public class GwClient {
         Map<String, Battle> activeBattleDict = api.queryActiveBattles().stream()
                 .collect(Collectors.toMap(Battle::getId, Function.identity()));
 
-        universeState.init(solarSystemDict, planetDict, activeBattleDict);
+        Map<String, Reinforcement> reinforcementsDict = api.queryReinforcements().stream()
+                .collect(Collectors.toMap(Reinforcement::getId, Function.identity()));
+
+        universeState.init(solarSystemDict, planetDict, activeBattleDict, reinforcementsDict);
 
         activeBattleDict.values().forEach(this::incorporate);
 

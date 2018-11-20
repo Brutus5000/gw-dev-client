@@ -3,9 +3,7 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<HBox xmlns:fx="http://javafx.com/fxml/1" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-      minHeight="800.0" minWidth="1600.0" xmlns="http://javafx.com/javafx/8.0.111"
-      fx:controller="com.faforever.gw.ui.MainController">
+<HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="800.0" minWidth="1600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.faforever.gw.ui.MainController">
     <children>
         <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="ALWAYS">
             <children>
@@ -13,29 +11,23 @@
                     <content>
                         <GridPane hgap="10.0">
                             <columnConstraints>
-                                <ColumnConstraints hgrow="NEVER" maxWidth="1.7976931348623157E308"/>
-                                <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308"/>
+                                <ColumnConstraints hgrow="NEVER" maxWidth="1.7976931348623157E308" />
+                                <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
                             </columnConstraints>
                             <rowConstraints>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             </rowConstraints>
                             <children>
-                                <Label text="User:"/>
-                                <ComboBox fx:id="userComboBox" maxWidth="1.7976931348623157E308"
-                                          GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-                                <HBox spacing="20.0" GridPane.columnSpan="2147483647" GridPane.hgrow="ALWAYS"
-                                      GridPane.rowIndex="1">
+                                <Label text="User:" />
+                                <ComboBox fx:id="userComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+                                <HBox spacing="20.0" GridPane.columnSpan="2147483647" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1">
                                     <children>
-                                        <Button fx:id="connectButton" maxWidth="1.7976931348623157E308"
-                                                mnemonicParsing="false" onAction="#onConnectClicked" text="Connect"
-                                                HBox.hgrow="ALWAYS"/>
-                                        <Button fx:id="disconnectButton" disable="true"
-                                                maxWidth="1.7976931348623157E308" mnemonicParsing="false"
-                                                onAction="#onDisconnectClicked" text="Disconnect" HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="connectButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onConnectClicked" text="Connect" HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="disconnectButton" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onDisconnectClicked" text="Disconnect" HBox.hgrow="ALWAYS" />
                                     </children>
                                     <GridPane.margin>
-                                        <Insets left="10.0" right="10.0" top="10.0"/>
+                                        <Insets left="10.0" right="10.0" top="10.0" />
                                     </GridPane.margin>
                                 </HBox>
                             </children>
@@ -46,26 +38,24 @@
                     <content>
                         <GridPane hgap="10.0">
                             <columnConstraints>
-                                <ColumnConstraints hgrow="NEVER" maxWidth="1.7976931348623157E308"/>
-                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308"/>
+                                <ColumnConstraints hgrow="NEVER" maxWidth="1.7976931348623157E308" />
+                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
                             </columnConstraints>
                             <rowConstraints>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             </rowConstraints>
                             <children>
-                                <Label text="Status:"/>
-                                <Label text="Character:" GridPane.rowIndex="1"/>
-                                <Label text="Current Battle:" GridPane.rowIndex="2"/>
-                                <TextField fx:id="statusTextField" disable="true" GridPane.columnIndex="1"/>
-                                <TextField fx:id="characterTextField" disable="true" GridPane.columnIndex="1"
-                                           GridPane.rowIndex="1"/>
-                                <TextField fx:id="currentBattleTextField" disable="true" GridPane.columnIndex="1"
-                                           GridPane.rowIndex="2"/>
+                                <Label text="Status:" />
+                                <Label text="Character:" GridPane.rowIndex="1" />
+                                <Label text="Current Battle:" GridPane.rowIndex="2" />
+                                <TextField fx:id="statusTextField" disable="true" GridPane.columnIndex="1" />
+                                <TextField fx:id="characterTextField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                <TextField fx:id="currentBattleTextField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                             </children>
                             <opaqueInsets>
-                                <Insets/>
+                                <Insets />
                             </opaqueInsets>
                         </GridPane>
                     </content>
@@ -74,38 +64,28 @@
                     <content>
                         <GridPane hgap="10.0">
                             <columnConstraints>
-                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308"/>
-                                <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="300.0"/>
-                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308"/>
+                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
+                                <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="300.0" />
+                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
                             </columnConstraints>
                             <rowConstraints>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             </rowConstraints>
                             <children>
-                                <Label text="InitiateAssault on Planet:"/>
-                                <Label text="JoinAssault in Battle:" GridPane.rowIndex="1"/>
-                                <Label text="LeaveAssault" GridPane.rowIndex="2"/>
-                                <ComboBox fx:id="initiateAssaultComboBox" maxWidth="1.7976931348623157E308"
-                                          prefHeight="25.0" promptText="choose a planet" GridPane.columnIndex="1"/>
-                                <ComboBox fx:id="joinAssaultComboBox" maxWidth="1.7976931348623157E308"
-                                          promptText="choose a battle" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                <HBox prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1"
-                                      GridPane.rowIndex="2"/>
-                                <Button fx:id="initiateAssaultButton" mnemonicParsing="false"
-                                        onAction="#onInitiateAssaultButtonClicked" text="send"
-                                        GridPane.columnIndex="2"/>
-                                <Button fx:id="joinAssaultButton" mnemonicParsing="false"
-                                        onAction="#onJoinAssaultButtonClicked" text="send" GridPane.columnIndex="2"
-                                        GridPane.rowIndex="1"/>
-                                <Button fx:id="leaveAssaultButton" mnemonicParsing="false"
-                                        onAction="#onLeaveAssaultButtonClicked" text="send" GridPane.columnIndex="2"
-                                        GridPane.rowIndex="2"/>
-                                <Label text="Debug hostGame" GridPane.rowIndex="3"/>
-                                <Button fx:id="debugHostGameButton" mnemonicParsing="false" onAction="#onDebugHostGame"
-                                        text="send" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                                <Label text="InitiateAssault on Planet:" />
+                                <Label text="JoinAssault in Battle:" GridPane.rowIndex="1" />
+                                <Label text="LeaveAssault" GridPane.rowIndex="2" />
+                                <ComboBox fx:id="initiateAssaultComboBox" maxWidth="1.7976931348623157E308" prefHeight="25.0" promptText="choose a planet" GridPane.columnIndex="1" />
+                                <ComboBox fx:id="joinAssaultComboBox" maxWidth="1.7976931348623157E308" promptText="choose a battle" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                <HBox prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                <Button fx:id="initiateAssaultButton" mnemonicParsing="false" onAction="#onInitiateAssaultButtonClicked" text="send" GridPane.columnIndex="2" />
+                                <Button fx:id="joinAssaultButton" mnemonicParsing="false" onAction="#onJoinAssaultButtonClicked" text="send" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                                <Button fx:id="leaveAssaultButton" mnemonicParsing="false" onAction="#onLeaveAssaultButtonClicked" text="send" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                                <Label text="Debug hostGame" GridPane.rowIndex="3" />
+                                <Button fx:id="debugHostGameButton" mnemonicParsing="false" onAction="#onDebugHostGame" text="send" GridPane.columnIndex="2" GridPane.rowIndex="3" />
                             </children>
                         </GridPane>
                     </content>
@@ -118,50 +98,47 @@
                     <tabs>
                         <Tab closable="false" text="Universe">
                             <content>
-                                <TreeTableView fx:id="universeTreeTableView" prefHeight="200.0" prefWidth="200.0"/>
+                                <TreeTableView fx:id="universeTreeTableView" prefHeight="200.0" prefWidth="200.0" />
                             </content>
                         </Tab>
                         <Tab closable="false" text="Battles">
                             <content>
-                                <TableView fx:id="battleTableView" maxWidth="1.7976931348623157E308"/>
+                                <TableView fx:id="battleTableView" maxWidth="1.7976931348623157E308" />
                             </content>
                         </Tab>
+                  <Tab closable="false" text="Reinforcements">
+                     <content>
+                        <TableView fx:id="reinforcementsTableView" maxWidth="1.7976931348623157E308" />
+                     </content>
+                  </Tab>
                         <Tab closable="false" text="Character Creation">
                             <content>
                                 <GridPane hgap="10.0" vgap="10.0">
                                     <columnConstraints>
-                                        <ColumnConstraints hgrow="SOMETIMES"/>
-                                        <ColumnConstraints hgrow="SOMETIMES"/>
-                                        <ColumnConstraints hgrow="SOMETIMES"/>
+                                        <ColumnConstraints hgrow="SOMETIMES" />
+                                        <ColumnConstraints hgrow="SOMETIMES" />
+                                        <ColumnConstraints hgrow="SOMETIMES" />
                                     </columnConstraints>
                                     <rowConstraints>
-                                        <RowConstraints fillHeight="false" minHeight="10.0" vgrow="NEVER"/>
-                                        <RowConstraints fillHeight="false" minHeight="10.0" vgrow="NEVER"/>
-                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints fillHeight="false" minHeight="10.0" vgrow="NEVER" />
+                                        <RowConstraints fillHeight="false" minHeight="10.0" vgrow="NEVER" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                     </rowConstraints>
                                     <children>
-                                        <Label text="Request Character:"/>
-                                        <ComboBox fx:id="requestCharacterFactionComboBox" prefWidth="150.0"
-                                                  promptText="Choose your faction" GridPane.columnIndex="1"/>
-                                        <Button fx:id="requestCharacterSendButton" mnemonicParsing="false"
-                                                onAction="#onRequestCharacterSendButtonClicked" text="send"
-                                                GridPane.columnIndex="2"/>
+                                        <Label text="Request Character:" />
+                                        <ComboBox fx:id="requestCharacterFactionComboBox" prefWidth="150.0" promptText="Choose your faction" GridPane.columnIndex="1" />
+                                        <Button fx:id="requestCharacterSendButton" mnemonicParsing="false" onAction="#onRequestCharacterSendButtonClicked" text="send" GridPane.columnIndex="2" />
                                         <VBox GridPane.rowIndex="1">
                                             <children>
-                                                <Label text="Select name:"/>
-                                                <TextField fx:id="selectNameRequestIdTextField" disable="true"
-                                                           editable="false" promptText="RequestId"/>
+                                                <Label text="Select name:" />
+                                                <TextField fx:id="selectNameRequestIdTextField" disable="true" editable="false" promptText="RequestId" />
                                             </children>
                                         </VBox>
-                                        <ComboBox fx:id="selectNameProposalComboBox" editable="true" prefWidth="150.0"
-                                                  promptText="Choose your name" GridPane.columnIndex="1"
-                                                  GridPane.rowIndex="1"/>
-                                        <Button fx:id="selectNameProposalButton" mnemonicParsing="false"
-                                                onAction="#onSelectNameProposalButtonClicked" text="send"
-                                                GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                        <ComboBox fx:id="selectNameProposalComboBox" editable="true" prefWidth="150.0" promptText="Choose your name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <Button fx:id="selectNameProposalButton" mnemonicParsing="false" onAction="#onSelectNameProposalButtonClicked" text="send" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                                     </children>
                                     <padding>
-                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                     </padding>
                                 </GridPane>
                             </content>
@@ -170,77 +147,72 @@
                             <content>
                                 <VBox>
                                     <children>
-                                        <Pane fx:id="universeEditorPane" maxHeight="1.7976931348623157E308"
-                                              maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
+                                        <Pane fx:id="universeEditorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                                         <HBox alignment="CENTER">
                                             <children>
-                                                <Button mnemonicParsing="false" onAction="#onDeselectAllClicked"
-                                                        text="Deselect all">
+                                                <Button mnemonicParsing="false" onAction="#onDeselectAllClicked" text="Deselect all">
                                                     <HBox.margin>
-                                                        <Insets right="10.0"/>
+                                                        <Insets right="10.0" />
                                                     </HBox.margin>
                                                 </Button>
                                                 <Button mnemonicParsing="false" onAction="#onLinkClicked" text="Link">
                                                     <HBox.margin>
-                                                        <Insets right="10.0"/>
+                                                        <Insets right="10.0" />
                                                     </HBox.margin>
                                                 </Button>
-                                                <Button mnemonicParsing="false" onAction="#onUnlinkClicked"
-                                                        text="Unlink"/>
-                                                <Button mnemonicParsing="false" onAction="#onSetFactionClicked"
-                                                        text="Set faction to">
+                                                <Button mnemonicParsing="false" onAction="#onUnlinkClicked" text="Unlink" />
+                                                <Button mnemonicParsing="false" onAction="#onSetFactionClicked" text="Set faction to">
                                                     <HBox.margin>
-                                                        <Insets left="10.0" right="2.0"/>
+                                                        <Insets left="10.0" right="2.0" />
                                                     </HBox.margin>
                                                 </Button>
-                                                <ComboBox fx:id="universeEditorFactionComboBox"
-                                                          promptText="Select a faction"/>
+                                                <ComboBox fx:id="universeEditorFactionComboBox" promptText="Select a faction" />
                                                 <Label text="Aeon:" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="20.0"/>
+                                                        <Insets left="20.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label fx:id="aeonPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="5.0"/>
+                                                        <Insets left="5.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label text="Cybran:" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="20.0"/>
+                                                        <Insets left="20.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label fx:id="cybranPlanetCountLabel" text="00000" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="5.0"/>
+                                                        <Insets left="5.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label text="UEF:" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="20.0"/>
+                                                        <Insets left="20.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label fx:id="uefPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="5.0"/>
+                                                        <Insets left="5.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label text="Seraphim:" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="20.0"/>
+                                                        <Insets left="20.0" />
                                                     </padding>
                                                 </Label>
                                                 <Label fx:id="seraphimPlanetCountLabel" text="0000" HBox.hgrow="ALWAYS">
                                                     <padding>
-                                                        <Insets left="5.0"/>
+                                                        <Insets left="5.0" />
                                                     </padding>
                                                 </Label>
                                             </children>
                                             <opaqueInsets>
-                                                <Insets/>
+                                                <Insets />
                                             </opaqueInsets>
                                             <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                             </padding>
                                         </HBox>
                                     </children>

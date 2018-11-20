@@ -1,14 +1,12 @@
 package com.faforever.gw.model;
 
-import com.faforever.gw.model.entitity.Battle;
-import com.faforever.gw.model.entitity.GwCharacter;
-import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.entitity.SolarSystem;
+import com.faforever.gw.model.entitity.*;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.Map;
 
 @Service
 public class UniverseState {
@@ -19,6 +17,7 @@ public class UniverseState {
     private Map<String, Battle> activeBattleDict;
     private Map<String, Battle> battleCache;
     private Map<String, GwCharacter> characterCache;
+    private Map<String, Reinforcement> reinforcementsDict;
 
     @Inject
     public UniverseState(ApplicationEventPublisher applicationEventPublisher) {
@@ -28,13 +27,14 @@ public class UniverseState {
     public void init(
             Map<String, SolarSystem> solarSystemDict,
             Map<String, Planet> planetDict,
-            Map<String, Battle> activeBattleDict
-    ) {
+            Map<String, Battle> activeBattleDict,
+            Map<String, Reinforcement> reinforcementsDict) {
         this.solarSystemDict = solarSystemDict;
         this.planetDict = planetDict;
         this.activeBattleDict = activeBattleDict;
         this.battleCache = new HashMap<>(activeBattleDict);
         this.characterCache = new HashMap<>();
+        this.reinforcementsDict = reinforcementsDict;
     }
 
     public Collection<SolarSystem> getSolarSystems() {
@@ -99,5 +99,17 @@ public class UniverseState {
         }
 
         return Optional.empty();
+    }
+
+    public Collection<Reinforcement> getReinforcements() {
+        return reinforcementsDict.values();
+    }
+
+    public Optional<Reinforcement> getReinforcement(String id) {
+        return Optional.ofNullable(reinforcementsDict.get(id));
+    }
+
+    public Optional<Reinforcement> getReinforcement(UUID id) {
+        return getReinforcement(id.toString());
     }
 }

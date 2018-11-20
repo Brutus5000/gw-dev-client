@@ -3,10 +3,7 @@ package com.faforever.gw.ui;
 import com.faforever.gw.model.ClientState;
 import com.faforever.gw.model.PlanetAction;
 import com.faforever.gw.model.UniverseState;
-import com.faforever.gw.model.entitity.Battle;
-import com.faforever.gw.model.entitity.Faction;
-import com.faforever.gw.model.entitity.Planet;
-import com.faforever.gw.model.entitity.SolarSystem;
+import com.faforever.gw.model.entitity.*;
 import com.faforever.gw.model.event.*;
 import com.faforever.gw.services.GwClient;
 import com.faforever.gw.ui.universe.ConnectionLine;
@@ -31,6 +28,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,6 +64,8 @@ public class MainController {
     @FXML
     private TableView<Battle> battleTableView;
     @FXML
+    private TableView<Reinforcement> reinforcementsTableView;
+    @FXML
     private TreeTableView<UniverseItemAdapter> universeTreeTableView;
     @FXML
     private ComboBox requestCharacterFactionComboBox;
@@ -95,6 +95,7 @@ public class MainController {
     private Map<SolarSystem, SolarSystemController> controllerMap = new HashMap<>();
     private List<ConnectionLine> connectionLines = new ArrayList<>();
     private ObservableList<Battle> battleData = FXCollections.observableArrayList();
+    private ObservableList<Reinforcement> reinforcementsData = FXCollections.observableArrayList();
 
     private final UniverseState universeState;
 
@@ -200,6 +201,7 @@ public class MainController {
         onClientStateChanged(ClientState.DISCONNECTED);
 
         setupBattleTableView();
+        setupReinforcementsTableView();
         setupUniverseTreeTableView();
     }
 
@@ -236,6 +238,64 @@ public class MainController {
         column_action.setCellFactory(param -> new BattleActionButtonCell());
 
         battleTableView.setItems(battleData);
+    }
+
+    private void setupReinforcementsTableView() {
+//        TableColumn<Reinforcement, String> typeColumn = new TableColumn<>("type");
+//        typeColumn.setMinWidth(200);
+//        typeColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getType().getName()));
+//        reinforcementsTableView.getColumns().add(typeColumn);
+
+        TableColumn<Reinforcement, String> priceColumn = new TableColumn<>("price");
+        priceColumn.setMaxWidth(50);
+        priceColumn.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getPrice())));
+        reinforcementsTableView.getColumns().add(priceColumn);
+
+        TableColumn<Reinforcement, String> delayColumn = new TableColumn<>("delay");
+        delayColumn.setMaxWidth(50);
+        delayColumn.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getDelay())));
+        reinforcementsTableView.getColumns().add(delayColumn);
+
+
+
+        TableColumn<Reinforcement, String> unitFaUidColumn = new TableColumn<>("u_faUid");
+        unitFaUidColumn.setMinWidth(100);
+        unitFaUidColumn.setCellValueFactory(c -> new SimpleStringProperty(Optional.ofNullable(c.getValue().getUnit()).map(Unit::getFaUid).orElse("")));
+        reinforcementsTableView.getColumns().add(unitFaUidColumn);
+
+        TableColumn<Reinforcement, String> unitNameColumn = new TableColumn<>("u_name");
+        unitNameColumn.setMinWidth(100);
+        unitNameColumn.setCellValueFactory(c -> new SimpleStringProperty(Optional.ofNullable(c.getValue().getUnit()).map(Unit::getName).orElse("")));
+        reinforcementsTableView.getColumns().add(unitNameColumn);
+
+        TableColumn<Reinforcement, String> unitFactionColumn = new TableColumn<>("u_faction");
+        unitFactionColumn.setMinWidth(50);
+        unitFactionColumn.setCellValueFactory(c -> new SimpleStringProperty(Optional.ofNullable(c.getValue().getUnit()).map(Unit::getFaction).map(Faction::getName).orElse("")));
+        reinforcementsTableView.getColumns().add(unitFactionColumn);
+
+        TableColumn<Reinforcement, String> unitTechLevelColumn = new TableColumn<>("u_t");
+        unitTechLevelColumn.setMaxWidth(30);
+        unitTechLevelColumn.setCellValueFactory(c -> new SimpleStringProperty(Optional.ofNullable(c.getValue().getUnit()).map(Unit::getTechLevel).map(TechLevel::getName).orElse("")));
+        reinforcementsTableView.getColumns().add(unitTechLevelColumn);
+
+
+        TableColumn<Reinforcement, String> itemNameColumn = new TableColumn<>("i_name");
+        itemNameColumn.setMinWidth(80);
+        itemNameColumn.setCellValueFactory(c -> new SimpleStringProperty(Optional.ofNullable(c.getValue().getItem()).map(PassiveItem::getName).orElse("")));
+        reinforcementsTableView.getColumns().add(itemNameColumn);
+
+
+        TableColumn<Reinforcement, String> typeColumn = new TableColumn<>("type");
+        typeColumn.setMinWidth(100);
+        typeColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getType().getName()));
+        reinforcementsTableView.getColumns().add(typeColumn);
+
+        TableColumn<Reinforcement, String> idColumn = new TableColumn<>("ID");
+        idColumn.setMinWidth(50);
+        idColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getId()));
+        reinforcementsTableView.getColumns().add(idColumn);
+
+        reinforcementsTableView.setItems(reinforcementsData);
     }
 
     private void setupUniverseTreeTableView() {
@@ -331,6 +391,9 @@ public class MainController {
 
     @EventListener
     public void onUniverseLoaded(UniverseLoadedEvent e) {
+        Platform.runLater(() ->
+            reinforcementsData.addAll(universeState.getReinforcements())
+        );
         Platform.runLater(this::refreshData);
     }
 
