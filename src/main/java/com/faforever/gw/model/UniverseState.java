@@ -1,6 +1,7 @@
 package com.faforever.gw.model;
 
 import com.faforever.gw.model.entitity.*;
+import javafx.beans.property.SimpleIntegerProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class UniverseState {
     private Map<String, Battle> battleCache;
     private Map<String, GwCharacter> characterCache;
     private Map<String, Reinforcement> reinforcementsDict;
+    private SimpleIntegerProperty credits = new SimpleIntegerProperty(0);
 
     @Inject
     public UniverseState(ApplicationEventPublisher applicationEventPublisher) {
@@ -111,5 +113,9 @@ public class UniverseState {
 
     public Optional<Reinforcement> getReinforcement(UUID id) {
         return getReinforcement(id.toString());
+    }
+
+    public SimpleIntegerProperty creditsProperty() {
+        return credits;
     }
 }

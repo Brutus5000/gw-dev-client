@@ -46,6 +46,8 @@ public class MainController {
     @FXML
     private TextField currentBattleTextField;
     @FXML
+    private TextField currentCreditsTextField;
+    @FXML
     private Button connectButton;
     @FXML
     private Button disconnectButton;
@@ -363,6 +365,7 @@ public class MainController {
                 case DISCONNECTED:
                     characterTextField.setText("");
                     currentBattleTextField.setText("");
+                    currentCreditsTextField.setText("");
                     initiateAssaultComboBox.getItems().clear();
                     joinAssaultComboBox.getItems().clear();
                     battleData.clear();
@@ -371,6 +374,7 @@ public class MainController {
                 case CONNECTED:
                     characterTextField.setText("");
                     currentBattleTextField.setText("");
+                    currentCreditsTextField.setText("");
                     break;
                 case FREE_FOR_BATTLE:
                     characterTextField.setText(gwClient.getMyCharacter().toString());
@@ -395,6 +399,8 @@ public class MainController {
             reinforcementsData.addAll(universeState.getReinforcements())
         );
         Platform.runLater(this::refreshData);
+
+        currentCreditsTextField.textProperty().bind(universeState.creditsProperty().asString());
     }
 
     @SneakyThrows

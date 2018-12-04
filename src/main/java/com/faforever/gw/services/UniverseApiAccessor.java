@@ -29,13 +29,13 @@ public class UniverseApiAccessor {
     }
 
     @SneakyThrows
-    private URL buildURL(String query) {
+    private URL buildDataURL(String query) {
         return new URL(MessageFormat.format("{0}://{1}:{2,number,#}/data/{3}", protocol, host, port, query));
     }
 
     @SneakyThrows
     public List<SolarSystem> querySolarSystems() {
-        URL solarSystemListUrl = buildURL("solarSystem?include=connectedSystems,planets");
+        URL solarSystemListUrl = buildDataURL("solarSystem?include=connectedSystems,planets");
         JSONAPIDocument<List<SolarSystem>> solarSystemList = resourceConverter.readDocumentCollection(solarSystemListUrl.openStream(), SolarSystem.class);
 
         return solarSystemList.get();
@@ -43,7 +43,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public List<Battle> queryActiveBattles() {
-        URL battleListUrl = buildURL("battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')");
+        URL battleListUrl = buildDataURL("battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')");
         JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
 
         return battleList.get();
@@ -51,7 +51,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public Battle queryBattle(String id) {
-        URL battleUrl = buildURL(MessageFormat.format("battle/{0}?include=participants,participants.character", id));
+        URL battleUrl = buildDataURL(MessageFormat.format("battle/{0}?include=participants,participants.character", id));
         JSONAPIDocument<Battle> battle = resourceConverter.readDocument(battleUrl.openStream(), Battle.class);
 
         return battle.get();
@@ -59,7 +59,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public GwCharacter queryCharacter(String id) {
-        URL characterUrl = buildURL(MessageFormat.format("gwCharacter/{0}", id));
+        URL characterUrl = buildDataURL(MessageFormat.format("gwCharacter/{0}", id));
         JSONAPIDocument<GwCharacter> character = resourceConverter.readDocument(characterUrl.openStream(), GwCharacter.class);
 
         return character.get();
@@ -67,7 +67,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public List<Reinforcement> queryReinforcements() {
-        URL reinforcementListUrl = buildURL("reinforcement?include=unit,item");
+        URL reinforcementListUrl = buildDataURL("reinforcement?include=unit,item");
         JSONAPIDocument<List<Reinforcement>> reinforcementList = resourceConverter.readDocumentCollection(reinforcementListUrl.openStream(), Reinforcement.class);
 
         return reinforcementList.get();

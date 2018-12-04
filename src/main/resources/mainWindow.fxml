@@ -45,14 +45,17 @@
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             </rowConstraints>
                             <children>
                                 <Label text="Status:" />
                                 <Label text="Character:" GridPane.rowIndex="1" />
                                 <Label text="Current Battle:" GridPane.rowIndex="2" />
+                                <Label text="Current Credits:" GridPane.rowIndex="3" />
                                 <TextField fx:id="statusTextField" disable="true" GridPane.columnIndex="1" />
                                 <TextField fx:id="characterTextField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                 <TextField fx:id="currentBattleTextField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                <TextField fx:id="currentCreditsTextField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                             </children>
                             <opaqueInsets>
                                 <Insets />

@@ -36,7 +36,8 @@ public class GwClient {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final MessagingService messagingService;
     private final UniverseState universeState;
-    private final UniverseApiAccessor api;
+    private final UniverseApiAccessor universeApi;
+    private final UserApiAccessor userApi;
     private Map<UUID, ClientMessage> pendingMessages = new HashMap<>();
     private ClientState clientState;
     @Getter
@@ -45,11 +46,12 @@ public class GwClient {
     private GwCharacter myCharacter;
 
     @Inject
-    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseState universeState, UniverseApiAccessor api) {
+    public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseState universeState, UniverseApiAccessor universeApi, UserApiAccessor userApi) {
         this.applicationEventPublisher = applicationEventPublisher;
         this.messagingService = messagingService;
         this.universeState = universeState;
-        this.api = api;
+        this.universeApi = universeApi;
+        this.userApi = userApi;
     }
 
     private Battle getBattle(UUID id) {
@@ -66,7 +68,7 @@ public class GwClient {
         clientState = ClientState.CONNECTED;
 
         if (message.getCharacterId() != null) {
-            myCharacter = api.queryCharacter(message.getCharacterId().toString());
+            myCharacter = universeApi.queryCharacter(message.getCharacterId().toString());
             universeState.addToCache(myCharacter);
 
             currentBattle = message.getCurrentBattleId();
@@ -84,7 +86,7 @@ public class GwClient {
 
     @SneakyThrows
     private void loadUniverseFromApi() {
-        Map<String, SolarSystem> solarSystemDict = api.querySolarSystems().stream()
+        Map<String, SolarSystem> solarSystemDict = universeApi.querySolarSystems().stream()
                 .collect(Collectors.toMap(SolarSystem::getId, Function.identity()));
 
         Map<String, Planet> planetDict = solarSystemDict.values().stream()
@@ -92,26 +94,28 @@ public class GwClient {
                 .collect(Collectors.toMap(Planet::getId, Function.identity()));
 
 
-        Map<String, Battle> activeBattleDict = api.queryActiveBattles().stream()
+        Map<String, Battle> activeBattleDict = universeApi.queryActiveBattles().stream()
                 .collect(Collectors.toMap(Battle::getId, Function.identity()));
 
-        Map<String, Reinforcement> reinforcementsDict = api.queryReinforcements().stream()
+        Map<String, Reinforcement> reinforcementsDict = universeApi.queryReinforcements().stream()
                 .collect(Collectors.toMap(Reinforcement::getId, Function.identity()));
 
         universeState.init(solarSystemDict, planetDict, activeBattleDict, reinforcementsDict);
+
+        universeState.creditsProperty().set(userApi.queryCredits());
 
         activeBattleDict.values().forEach(this::incorporate);
 
     }
 
     private Battle loadBattle(UUID id) {
-        Battle battle = api.queryBattle(id.toString());
+        Battle battle = universeApi.queryBattle(id.toString());
         incorporate(battle);
         return battle;
     }
 
     private GwCharacter loadCharacter(UUID id) {
-        GwCharacter character = api.queryCharacter(id.toString());
+        GwCharacter character = universeApi.queryCharacter(id.toString());
         universeState.addToCache(character);
         return character;
     }
