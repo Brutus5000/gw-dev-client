@@ -3,6 +3,10 @@ gw:
     host: localhost
     port: 8014
     protocol: http
+api:
+  client-id: 1234567890
+  client-secret: TODO
+  access-token-uri: https://localhost:1234/TODO
 logging:
   level:
     com.faforever.gw: debug

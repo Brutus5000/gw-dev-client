@@ -45,6 +45,9 @@ public class GwClient {
     @Getter
     private GwCharacter myCharacter;
 
+    @Getter
+    private String currentToken;
+
     @Inject
     public GwClient(ApplicationEventPublisher applicationEventPublisher, MessagingService messagingService, ObjectMapper jsonObjectMapper, UniverseState universeState, UniverseApiAccessor universeApi, UserApiAccessor userApi) {
         this.applicationEventPublisher = applicationEventPublisher;
@@ -61,6 +64,8 @@ public class GwClient {
 
     @EventListener
     private void onHello(HelloMessage message) {
+        userApi.authorize(null, currentToken);
+
         if (clientState == null || clientState == ClientState.DISCONNECTED) {
             loadUniverseFromApi();
         }
@@ -223,6 +228,8 @@ public class GwClient {
     }
 
     public void connect(String token) {
+        this.currentToken = token;
+
         String uri = String.format("ws://%s:%s/websocket?access_token=%s", host, port, token);
         messagingService.connect(uri);
     }
