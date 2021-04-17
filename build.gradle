@@ -79,8 +79,8 @@ dependencies {
 mainClassName = 'com.faforever.moderatorclient.Launcher'
 
 group = 'com.faforever'
-version = '0.9.1'
-description = 'faf-moderator-client'
+version = '0.0.3'
+description = 'gw-dev-client'
 sourceCompatibility = '11'
 
 tasks.withType(JavaCompile) {
