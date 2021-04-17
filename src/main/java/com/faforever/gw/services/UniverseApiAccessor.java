@@ -43,7 +43,7 @@ public class UniverseApiAccessor {
 
     @SneakyThrows
     public List<Battle> queryActiveBattles() {
-        URL battleListUrl = buildURL("battle?include=participants,participants.character&filter[battle]=status=in=('INITIATED','RUNNING')");
+        URL battleListUrl = buildURL("battle?include=participants,participants.character&filter=status=in=('INITIATED','RUNNING')");
         JSONAPIDocument<List<Battle>> battleList = resourceConverter.readDocumentCollection(battleListUrl.openStream(), Battle.class);
 
         return battleList.get();
