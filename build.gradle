@@ -43,8 +43,8 @@ project.ext.javafxPlatform = "win"
 println "Platform is: ${javafxPlatform}"
 
 dependencies {
-    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:2.4.3"))
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:2.4.3"))
+    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:2.5.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:2.5.6"))
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
